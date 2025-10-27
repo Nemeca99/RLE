@@ -4,7 +4,7 @@ RLE Session Report - AUTO-GENERATED
 ========================================================================
 
 Session File: rle_20251027_05.csv
-Date: 2025-10-27 01:58:02
+Date: 2025-10-27 02:53:15
 
 ========================================================================
 SESSION DURATION
@@ -85,10 +85,10 @@ Recommendations:
 ========================================================================
 NEXT STEPS
 ========================================================================
-1. Review the detailed analysis: python lab/analyze_session.py sessions\recent\rle_20251027_05.csv
-2. Validate system: python kia_validate.py sessions\recent\rle_20251027_05.csv
+1. Review the detailed analysis: python lab/analyze_session.py lab\sessions\recent\rle_20251027_05.csv
+2. Validate system: python kia_validate.py lab\sessions\recent\rle_20251027_05.csv
 3. Check other sessions: python lab/scripts/batch_analyze.py lab/sessions/recent/
 
 ========================================================================
-Report generated: 2025-10-27 01:58:02
+Report generated: 2025-10-27 02:53:15
 ========================================================================
