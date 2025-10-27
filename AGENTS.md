@@ -255,4 +255,5 @@ This breaks backward compatibility - old CSVs won't have these columns.
 - **One-Click Launcher**: Created `RUN_RLE.bat` - dead-simple entrypoint (installs deps, starts monitor + dashboard automatically)
 - **Auto-Report Generation**: Created `lab/monitoring/generate_report.py` - automatically generates session reports on monitor shutdown with health verdict and recommendations
 - **Data Collection Documentation**: Created `lab/docs/DATA_COLLECTION.md` - comprehensive guide categorizing all metrics by type (Efficiency, Temperature, Power, Diagnostics, Events) with interpretation guidelines
+- **Enhanced GPU Telemetry**: Added 7 new GPU metrics (clocks, memory, performance state, throttle reasons, power limits) for deeper diagnostics and throttling analysis
 
