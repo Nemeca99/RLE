@@ -35,6 +35,19 @@ venv.bak/
 *.swp
 *.swo
 *~
+.cursor/
+
+# Specstory history
+.specstory/
+
+# Hardware screenshots (sensitive)
+lab/pc/
+
+# Duplicate directory
+lab/lab/
+
+# Test output
+test_output.txt
 .DS_Store
 
 # Session data (auto-generated)
