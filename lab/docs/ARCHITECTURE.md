@@ -213,6 +213,47 @@ Outputs:
 - Change sampling rate (affects detection latency)
 - Modify RLE formula (breaks backward compatibility)
 
+## Public Interface: CSV Schema (Frozen v0.3.0)
+
+The CSV schema is now **frozen** and guaranteed stable for analysis tools.
+
+**Schema Version**: v0.3.0 (2025-10-27)
+
+```csv
+timestamp,device,rle_smoothed,rle_raw,E_th,E_pw,temp_c,vram_temp_c,power_w,util_pct,a_load,t_sustain_s,fan_pct,rolling_peak,collapse,alerts
+```
+
+**Column Definitions** (16 columns total):
+
+| Position | Column | Type | Description | Example |
+|----------|--------|------|-------------|---------|
+| 1 | `timestamp` | ISO string | UTC timestamp | `2025-10-27T04:33:22.489Z` |
+| 2 | `device` | string | "gpu" or "cpu" | `gpu` |
+| 3 | `rle_smoothed` | float | 5-sample rolling avg RLE | `0.723456` |
+| 4 | `rle_raw` | float | Instantaneous RLE | `0.845678` |
+| 5 | `E_th` | float | Thermal efficiency | `0.580000` |
+| 6 | `E_pw` | float | Power efficiency | `1.350000` |
+| 7 | `temp_c` | float | Core temp (°C) | `75.00` |
+| 8 | `vram_temp_c` | float | VRAM/junction temp (°C) | `82.00` |
+| 9 | `power_w` | float | Power draw (W) | `198.50` |
+| 10 | `util_pct` | float | Utilization (%) | `99.00` |
+| 11 | `a_load` | float | Normalized load | `0.993` |
+| 12 | `t_sustain_s` | float | Seconds to thermal limit | `310.0` |
+| 13 | `fan_pct` | int | Fan speed (%) | `80` |
+| 14 | `rolling_peak` | float | Adaptive peak reference | `1.001545` |
+| 15 | `collapse` | int | Collapse flag (0/1) | `1` |
+| 16 | `alerts` | string | Pipe-separated warnings | `GPU_TEMP\|VRAM_TEMP` |
+
+**Breaking Changes Policy**:
+- ✅ New columns may be added (append only, nullable for old data)
+- ❌ Existing columns WILL NOT be removed
+- ❌ Column order WILL NOT change
+- ❌ Data types WILL NOT change
+
+**Backward Compatibility**:
+- Tools should handle missing `E_th`, `E_pw`, `rolling_peak` (v0.2.0 and earlier)
+- Analysis tools check for column existence before using
+
 ## Related Documentation
 
 - **Quick Reference**: See `QUICK_REFERENCE.md` for command cheat sheet

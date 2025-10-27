@@ -11136,9 +11136,327 @@ Creating a Getting Started guide:
 
 Tool use: **write**
 
+
+<details><summary>Edit file: GETTING_STARTED.md</summary>
+
+**Chunk 1**
+Lines added: 277, lines removed: 1
+
+```diff
+@@ -1,1 +1,277 @@
+- 
++ # Getting Started with RLE Monitoring
++ 
++ A quick walkthrough to get you up and running in 5 minutes.
++ 
++ ## Prerequisites
++ 
++ - Windows 10/11
++ - Python 3.10 or later
++ - NVIDIA GPU with NVML support
++ - 5 minutes of your time
++ 
++ ## Step 1: Install Dependencies
++ 
++ ```bash
++ # Navigate to project
++ cd F:\RLE
++ 
++ # Install Python packages
++ pip install -r lab/requirements_lab.txt
++ ```
++ 
++ **Expected output**:
++ ```
++ Successfully installed psutil-5.x.x nvidia-ml-py3-12.x.x pandas-2.x.x streamlit-1.x.x
++ ```
++ 
++ ## Step 2: Verify Your System
++ 
++ ```bash
++ # Check GPU is detected
++ python -c "import pynvml; pynvml.nvmlInit(); h = pynvml.nvmlDeviceGetHandleByIndex(0); print('GPU:', pynvml.nvmlDeviceGetName(h).decode())"
++ ```
++ 
++ **Expected output**:
++ ```
++ GPU: NVIDIA GeForce RTX 3060
++ ```
++ 
++ If you see an error, check [Troubleshooting Guide](lab/docs/TROUBLESHOOTING.md).
++ 
++ ## Step 3: Start Monitoring
++ 
++ ### Option A: Full Suite (Recommended)
++ 
++ Double-click or run:
++ ```bash
++ lab\start_monitoring_suite.bat
++ ```
++ 
++ This opens:
++ - Terminal window (running monitor)
++ - Browser window (Streamlit dashboard)
++ 
++ ### Option B: Monitor Only
++ 
++ ```bash
++ cd lab
++ python start_monitor.py --mode gpu --sample-hz 1
++ ```
++ 
++ ## Step 4: Generate Some Data
++ 
++ Now do one of:
++ - Play a game for 10 minutes
++ - Run a stress test: `python lab/stress/simple_stress.py`
++ - Use an existing workload
++ 
++ The monitor will log to: `lab/sessions/recent/rle_YYYYMMDD_HH.csv`
++ 
++ ## Step 5: Analyze Your Session
++ 
++ ### Quick Check
++ 
++ ```bash
++ python lab/analyze_session.py
++ ```
++ 
++ **Sample output**:
++ ```
++ ======================================================================
++ RLE Session Analysis: rle_20251027_04.csv
++ ======================================================================
++ 
++ 📅 Session Duration
++    Start: 2025-10-27 04:33:22Z
++    End:   2025-10-27 04:43:52Z
++    Duration: 10.5 minutes (630 samples)
++ 
++ 📈 RLE Efficiency
++    Max smoothed:  1.0015
++    Mean smoothed: 0.2456
++ 
++ 💡 Health Assessment:
++    ✅ Temperature: Good (below 80°C)
++    ✅ Collapse rate: Very low (2.3%) - healthy operation
++ ```
++ 
++ ### Validate System Integrity
++ 
++ ```bash
++ python kia_validate.py lab/sessions/recent/LATEST.csv
++ ```
++ 
++ Generates report in `validation_logs/` with:
++ - Formula validation results
++ - Session statistics
++ - Health assessment
++ 
++ ### View Real-time Dashboard
++ 
++ If you ran `start_monitoring_suite.bat`, the Streamlit dashboard should be open at:
++ ```
++ http://localhost:8501
++ ```
++ 
++ Shows:
++ - Live power/temperature graphs
++ - RLE efficiency over time
++ - Collapse events (red markers)
++ - Summary statistics
++ 
++ ## Step 6: Interpret Results
++ 
++ ### What Does RLE Mean?
++ 
++ **RLE** (Recursive Load Efficiency) measures how efficiently your hardware converts power into useful work while staying thermally sustainable.
++ 
++ - `RLE > 0.8`: Excellent - system running optimally
++ - `RLE 0.5-0.8`: Good - normal operation
++ - `RLE 0.2-0.5`: Moderate - may be power/thermal limited
++ - `RLE < 0.2`: Poor - system overstressed
++ 
++ ### Understanding Collapse Events
++ 
++ **Collapse events** occur when:
++ 1. RLE drops below 65% of recent peak
++ 2. System is under load (util > 60% OR a_load > 0.75)
++ 3. Temperature is rising (>0.05°C/s)
++ 4. Evidence of thermal stress (t_sustain < 60s) OR power limiting (a_load > 0.95)
++ 
++ **Healthy systems** have collapse rate < 5%.
++ 
++ **High collapse rate (>15%)** suggests:
++ - Thermal throttling (improve cooling)
++ - Power limit reached (lower power target or load)
++ - Thermal mass effect (slow cooldown from previous stress)
++ 
++ ### Interpreting Components
++ 
++ **E_th (Thermal Efficiency)**:
++ - How well you're managing thermal headroom
++ - Low = approaching temp limit
++ - High = plenty of thermal room
++ 
++ **E_pw (Power Efficiency)**:
++ - How effectively power is being utilized
++ - Low = hitting power limits
++ - High = underutilized or efficient
++ 
++ **t_sustain (Time to Limit)**:
++ - Seconds until thermal throttling
++ - <60s = Very close to limit
++ - >300s = Plenty of headroom
++ 
++ ## Step 7: Optimization Strategies
++ 
++ Based on your results:
++ 
++ ### If RLE is Low (< 0.5) and Collapse Rate High
++ 
++ **Thermal-Limited** (E_th low):
++ - Improve airflow
++ - Adjust fan curve
++ - Lower ambient temperature
++ - Undervolt (reduces power → less heat)
++ 
++ **Power-Limited** (E_pw low, a_load > 0.95):
++ - Increase power limit (MSI Afterburner)
++ - Reduce load (lower game settings)
++ - Or accept occasional power throttling (normal)
++ 
++ ### If Collapse Rate is False High (>50%)
++ 
++ **Cause**: Using old detector (pre-v0.3.0)
++ 
++ **Fix**: Re-record session with updated monitor
++ 
++ ### If System Runs Fine But RLE Low
++ 
++ **Cause**: Scene switching (normal for games)
++ 
++ **Fix**: This is expected - games load new assets, transition menus, etc.
++ - Low mean RLE is normal for bimodal load
++ - Check max RLE (should be > 0.8 during gameplay peaks)
++ 
++ ## Example Workflows
++ 
++ ### Workflow 1: First Session
++ 
++ ```bash
++ # 1. Start monitoring
++ python lab\start_monitoring_suite.bat
++ 
++ # 2. Play for 15 minutes
++ 
++ # 3. Analyze results
++ python lab\analyze_session.py
++ 
++ # 4. Check health
++ # If collapse rate < 5%: ✅ System healthy
++ # If collapse rate > 15%: ⚠️ Check cooling
++ ```
++ 
++ ### Workflow 2: Optimization Test
++ 
++ ```bash
++ # 1. Baseline measurement
++ python lab\start_monitor.py --mode gpu > baseline.csv
++ 
++ # 2. Run with new settings (e.g., different fan curve)
++ 
++ # 3. Compare sessions
++ python scripts/batch_analyze.py sessions/recent/
++ 
++ # 4. See which has better RLE and lower collapse rate
++ ```
++ 
++ ### Workflow 3: Validation
++ 
++ ```bash
++ # After any monitoring session
++ python kia_validate.py sessions/recent/LATEST.csv
++ 
++ # Check validation_logs/kia_report_*.md
++ # Verify: 90%+ match rate = formula correct
++ # Verify: Collapse rate matches expectations
++ ```
++ 
++ ## Next Steps
++ 
++ 1. **Read the docs**:
++    - [Quick Reference](QUICK_REFERENCE.md) - Command cheat sheet
++    - [What is RLE?](lab/docs/WHAT_IS_RLE.md) - Formula explained
++    - [Architecture](lab/docs/ARCHITECTURE.md) - System overview
++    - [Troubleshooting](lab/docs/TROUBLESHOOTING.md) - Common issues
++ 
++ 2. **Customize your setup**:
++    - Adjust sampling rate (--sample-hz)
++    - Set custom temp limits
++    - Add custom stress generators
++ 
++ 3. **Analyze historical data**:
++    - Move old sessions to `archive/`
++    - Run batch analysis for trends
++    - Compare different configurations
++ 
++ ## Troubleshooting
++ 
++ If something doesn't work:
++ 
++ 1. Check [Troubleshooting Guide](lab/docs/TROUBLESHOOTING.md)
++ 2. Run diagnostics: `python kia_validate.py`
++ 3. Check system: `nvidia-smi` and `python --version`
++ 4. Review logs in `validation_logs/`
++ 
++ ## Getting Help
++ 
++ - **Quick answers**: [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
++ - **Technical details**: [lab/docs/](lab/docs/)
++ - **Agent guidance**: [AGENTS.md](AGENTS.md)
++ - **Version history**: [CHANGELOG.md](CHANGELOG.md)
++ 
++ ---
++ 
++ **Last Updated**: Session 2025-10-27  
++ **Agent**: Kia v1.0
++ 
+```
+
+</details>
+
 ---
 
 
+
+---
+
+Updating cross-references to the new guides:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: README.md</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -131,5 +131,7 @@
+  
+  **Documentation**:
++ - 🚀 [Getting Started](GETTING_STARTED.md) - 5-minute walkthrough
+  - ⚡ [Quick Reference](QUICK_REFERENCE.md) - Command cheat sheet & CSV guide
++ - 🐛 [Troubleshooting](lab/docs/TROUBLESHOOTING.md) - Common issues & solutions
+  - 📖 [What is RLE?](lab/docs/WHAT_IS_RLE.md) - Formula explained with examples
+  - 📊 [Interpreting Results](lab/docs/INTERPRETING_RESULTS.md) - Guide to analyzing sessions
+```
+
+</details>
 
 ---
 
@@ -11148,13 +11466,64 @@ Tool use: **write**
 
 Tool use: **search_replace**
 
+
+<details><summary>Edit file: AGENTS.md</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: undefined
+
+```diff
+@@ -251,4 +251,6 @@
+  - **Agent Identity System**: Created `Kia.yaml` config, `kia_validate.py` with markdown reports and logging, added agent tracking to CHANGELOG
+  - **Quick Reference**: Created `QUICK_REFERENCE.md` - command cheat sheet, CSV columns, troubleshooting guide
++ - **Getting Started Guide**: Created `GETTING_STARTED.md` - 5-minute walkthrough for new users
++ - **Troubleshooting Guide**: Created `lab/docs/TROUBLESHOOTING.md` - comprehensive issue resolution
+  
+  
+```
+
+</details>
+
 ---
 
 
 
 ---
 
+Tool use: **search_replace**
 
+
+<details><summary>Edit file: QUICK_REFERENCE.md</summary>
+
+**Chunk 1**
+Lines added: 11, lines removed: 3
+
+```diff
+@@ -172,10 +172,18 @@
+  ## 📞 Key Files
+  
+- - `AGENTS.md` - Full agent instructions for AI assistants
+- - `lab/README.md` - Lab documentation
+- - `lab/USAGE.md` - Usage guide
++ ### Getting Started
++ - `GETTING_STARTED.md` - 5-minute walkthrough
++ - `QUICK_REFERENCE.md` - This file (command cheat sheet)
++ - `lab/USAGE.md` - Quick start usage
++ 
++ ### Documentation
+  - `lab/docs/WHAT_IS_RLE.md` - Formula explained
+  - `lab/docs/INTERPRETING_RESULTS.md` - Analysis guide
+  - `lab/docs/ARCHITECTURE.md` - System diagrams
++ - `lab/docs/TROUBLESHOOTING.md` - Common issues & fixes
++ 
++ ### Reference
++ - `lab/README.md` - Lab documentation
++ - `AGENTS.md` - AI assistant instructions
+  - `CHANGELOG.md` - Version history
+  
+```
+
+</details>
 
 ---
 
@@ -11162,11 +11531,423 @@ Tool use: **search_replace**
 
 ---
 
+Committing improvements:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git add -A && git commit -m "docs: Add GETTING_STARTED.md and TROUBLESHOOTING.md with comprehensive user guides" && git push
+```
+
+```
+PS F:\RLE> git add -A && git commit -m "docs: Add GETTING_STARTED.md and TROUBLESHOOTING.md with comprehensive user guides" && git push
+[main 77790f9] docs: Add GETTING_STARTED.md and TROUBLESHOOTING.md with comprehensive user guides
+ 6 files changed, 1483 insertions(+), 3 deletions(-)
+ create mode 100644 GETTING_STARTED.md
+ create mode 100644 lab/docs/TROUBLESHOOTING.md
+Enumerating objects: 21, done.
+Counting objects: 100% (21/21), done.
+Delta compression using up to 16 threads
+Compressing objects: 100% (12/12), done.
+Writing objects: 100% (12/12), 12.93 KiB | 2.16 MiB/s, done.
+Total 12 (delta 8), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (8/8), completed with 8 local objects.
+To https://github.com/Nemeca99/RLE.git
+   342bc76..77790f9  main -> main
+```
+
+---
+
+
+
+---
+
+## Improvements added
+
+### 1. **GETTING_STARTED.md** — 5-minute walkthrough
+- Step-by-step setup
+- Verification and run steps
+- Results interpretation
+- Optimization strategies
+- Example workflows (first session, baseline comparison, validation)
+
+### 2. **lab/docs/TROUBLESHOOTING.md**
+- Fixes for common monitor startup issues, false positives, and dashboard errors
+- Solutions for system overstress
+- Hardware issues (NVML, VRAM, HWiNFO)
+- Performance diagnostics
+- Diagnostic commands and workflow tips
+
+### 3. Cross-references updated
+- README.md highlights Getting Started first
+- QUICK_REFERENCE.md organized by category
+- AGENTS.md added notes on new guides
+
+---
+
+## Current documentation
+
+| Guide | Purpose | Audience |
+|-------|---------|----------|
+| `GETTING_STARTED.md` | 5-min walkthrough | New users |
+| `QUICK_REFERENCE.md` | Command cheat sheet | All users |
+| `lab/docs/TROUBLESHOOTING.md` | Issue resolution | Users with problems |
+| `lab/docs/WHAT_IS_RLE.md` | Formula explained | Everyone |
+| `lab/docs/INTERPRETING_RESULTS.md` | Analysis guide | Data analysts |
+| `lab/docs/ARCHITECTURE.md` | System design | Developers |
+| `AGENTS.md` | AI instructions | AI assistants |
+
+Result: clear, targeted documentation.
+
+---
+
+_**User (2025-10-27 02:28Z)**_
+
+Here’s exactly what you should do next, in order, without wandering off into seventeen side quests:
+
+Make the starter path frictionless
+
+Right now, starting the system still assumes the user knows which script to run, where CSVs go, how to read them, etc.
+
+You already have start_monitoring_suite.bat and start_monitor.py. Good. Now make one dead-simple entrypoint in the repo root called something like RUN_RLE.bat (Windows is fine).
+
+That script should:
+
+install deps (or check them)
+
+start the monitor
+
+start the dashboard
+
+echo where the CSV is being written
+
+Goal: somebody double-clicks one file and they’re collecting RLE data and seeing live graphs. No terminal typing, no “cd lab,” none of that.
+
+Why this matters: if you ever want anyone else to take this seriously, “just run RUN_RLE.bat” is the difference between “cool project” and “I’ll test this tonight.”
+
+Freeze the public interface
+
+You already versioned to 0.3.0 and your CSV schema is documented:
+timestamp, device, rle_smoothed, rle_raw, E_th, E_pw, temp_c, vram_temp_c, power_w, util_pct, a_load, t_sustain_s, fan_pct, rolling_peak, collapse, alerts
+
+---
+
+_**Assistant (default)**_
+
 
 
 ---
 
 
+Creating a one-click launcher:
+
+
+---
+
+Tool use: **write**
+
+
+<details><summary>Edit file: RUN_RLE.bat</summary>
+
+**Chunk 1**
+Lines added: 97, lines removed: 1
+
+```diff
+@@ -1,1 +1,97 @@
+- 
++ @echo off
++ REM ========================================
++ REM RLE Monitoring Lab - One-Click Launcher
++ REM ========================================
++ REM
++ REM This script does everything:
++ REM   1. Checks Python is installed
++ REM   2. Installs dependencies
++ REM   3. Starts the monitor
++ REM   4. Starts the Streamlit dashboard
++ REM   5. Shows where CSV is being saved
++ REM
++ REM Just double-click to start!
++ REM ========================================
++ 
++ setlocal enabledelayedexpansion
++ 
++ title RLE Monitoring Lab Launcher
++ 
++ echo.
++ echo ========================================
++ echo   RLE Monitoring Lab - Starting...
++ echo ========================================
++ echo.
++ 
++ REM Step 1: Check Python
++ echo [1/5] Checking Python installation...
++ python --version >nul 2>&1
++ if errorlevel 1 (
++     echo   ERROR: Python not found!
++     echo   Please install Python 3.10+ from https://python.org
++     pause
++     exit /b 1
++ )
++ python --version
++ echo   OK: Python found!
++ echo.
++ 
++ REM Step 2: Install dependencies
++ echo [2/5] Installing dependencies...
++ echo   This may take a minute the first time...
++ pip install -q -r lab/requirements_lab.txt --disable-pip-version-check
++ if errorlevel 1 (
++     echo   WARNING: Some dependencies may not have installed correctly
++     echo   Continuing anyway...
++ ) else (
++     echo   OK: Dependencies installed!
++ )
++ echo.
++ 
++ REM Step 3: Create directories if needed
++ echo [3/5] Setting up directories...
++ if not exist "lab\sessions\recent" mkdir "lab\sessions\recent"
++ if not exist "validation_logs" mkdir "validation_logs"
++ echo   OK: Directories ready!
++ echo.
++ 
++ REM Step 4: Start monitor
++ echo [4/5] Starting hardware monitor...
++ echo   Monitor will write to: lab\sessions\recent\rle_YYYYMMDD_HH.csv
++ start "RLE Monitor" /MIN cmd /c "cd lab && python start_monitor.py --mode gpu --sample-hz 1 && pause"
++ timeout /t 3 /nobreak >nul
++ echo   OK: Monitor started!
++ echo.
++ 
++ REM Step 5: Start dashboard
++ echo [5/5] Starting Streamlit dashboard...
++ echo   Dashboard will open in your browser at http://localhost:8501
++ start "RLE Dashboard" cmd /c "cd lab\monitoring && streamlit run rle_streamlit.py --server.headless=false && pause"
++ echo   OK: Dashboard starting!
++ echo.
++ 
++ REM Show user what's happening
++ echo ========================================
++ echo   RLE Monitoring is NOW RUNNING!
++ echo ========================================
++ echo.
++ echo   Monitor Window:  (running in background)
++ echo   Dashboard:       (browser should open automatically)
++ echo   CSV Output:      lab\sessions\recent\rle_YYYYMMDD_HH.csv
++ echo.
++ echo   To stop:
++ echo     1. Close the browser tab (dashboard)
++ echo     2. Check taskbar for "RLE Monitor" window
++ echo     3. Close that window to stop the monitor
++ echo.
++ echo   Analyzing your session later:
++ echo     python lab\analyze_session.py
++ echo.
++ echo ========================================
++ echo.
++ 
++ REM Keep this window open so user can see status
++ echo Press any key to close this launcher window (monitoring continues)...
++ pause >nul
++ exit
++ 
+```
+
+</details>
+
+---
+
+
+
+---
+
+Updating README to make this the primary entry point:
+
+
+---
+
+The string to replace was not found in the file.
+
+---
+
+
+
+---
+
+Tool use: **read_file**
+
+Read file: README.md
+
+---
+
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: README.md</summary>
+
+**Chunk 1**
+Lines added: 25, lines removed: 18
+
+```diff
+@@ -21,30 +21,37 @@
+  
+  ## 🚀 Quick Start
++ 
++ ### ⚡ One-Click Launch (Easiest)
++ 
++ **Just double-click `RUN_RLE.bat`** in the repo root!
++ 
++ It will automatically:
++ - ✅ Check Python installation
++ - ✅ Install dependencies
++ - ✅ Start the monitor
++ - ✅ Open live dashboard in browser
++ - ✅ Show where CSVs are being saved
++ 
++ ### 🔧 Manual Start
+  
+  ```bash
+- # 1. Install dependencies
+- pip install psutil nvidia-ml-py3 pandas streamlit plotly
+- # Or: pip install -r lab/requirements_lab.txt
+- 
+- # 2. Start monitoring (choose one):
+- 
+- # Option A: Monitoring only (background logging)
++ # Option A: Full suite (monitor + live graphs)
++ cd lab
++ start_monitoring_suite.bat
++ 
++ # Option B: Monitoring only
+  cd lab
+  python start_monitor.py --mode gpu --sample-hz 1
++ ```
+  
+- # Option B: Full suite (monitor + live graphs)
+- cd lab
+- start_monitoring_suite.bat
++ ### 📊 Analyze Session
+  
+- # 3. Game/use your PC normally...
+- # Ctrl+C when done
++ ```bash
++ # Quick analysis
++ python lab/analyze_session.py
+  
+- # 4. Analyze session
+- python analyze_session.py sessions/recent/rle_YYYYMMDD_HH.csv
++ # Validate system
++ python kia_validate.py
+  ```
+- 
+- **Full Suite** opens two windows:
+- - Terminal: Background logging to CSV
+- - Browser: Streamlit real-time dashboard with live graphs
+  
+  ## 📊 RLE_real Formula
+```
+
+</details>
+
+---
+
+
+
+---
+
+Updating GETTING_STARTED.md to lead with the one-click launcher:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: GETTING_STARTED.md</summary>
+
+**Chunk 1**
+Lines added: 19, lines removed: 12
+
+```diff
+@@ -41,18 +41,25 @@
+  ## Step 3: Start Monitoring
+  
+- ### Option A: Full Suite (Recommended)
+- 
+- Double-click or run:
+- ```bash
+- lab\start_monitoring_suite.bat
+- ```
+- 
+- This opens:
+- - Terminal window (running monitor)
+- - Browser window (Streamlit dashboard)
+- 
+- ### Option B: Monitor Only
++ ### ⚡ One-Click Launch (Easiest)
++ 
++ **Just double-click `RUN_RLE.bat`** in the repo root!
++ 
++ This automatically:
++ - ✅ Checks Python installation
++ - ✅ Installs dependencies
++ - ✅ Starts the monitor
++ - ✅ Opens Streamlit dashboard in browser
++ - ✅ Shows where CSVs are being saved
++ 
++ **That's it!** No command line needed.
++ 
++ ### 🔧 Manual Start (Alternative)
+  
+  ```bash
++ # Full suite
++ cd lab
++ start_monitoring_suite.bat
++ 
++ # Or monitor only
+  cd lab
+  python start_monitor.py --mode gpu --sample-hz 1
+```
+
+</details>
+
+---
+
+
+
+---
+
+Updating AGENTS.md and committing.
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: AGENTS.md</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -253,4 +253,5 @@
+  - **Getting Started Guide**: Created `GETTING_STARTED.md` - 5-minute walkthrough for new users
+  - **Troubleshooting Guide**: Created `lab/docs/TROUBLESHOOTING.md` - comprehensive issue resolution
++ - **One-Click Launcher**: Created `RUN_RLE.bat` - dead-simple entrypoint (installs deps, starts monitor + dashboard automatically)
+  
+  
+```
+
+</details>
 
 ---
 
@@ -11176,9 +11957,25 @@ Tool use: **search_replace**
 
 Tool use: **run_terminal_cmd**
 
----
+```bash
+git add -A && git commit -m "feat: Add RUN_RLE.bat one-click launcher - zero-config entrypoint" && git push
+```
 
-
+```
+PS F:\RLE> git add -A && git commit -m "feat: Add RUN_RLE.bat one-click launcher - zero-config entrypoint" && git push
+[main aed407c] feat: Add RUN_RLE.bat one-click launcher - zero-config entrypoint
+ 5 files changed, 833 insertions(+), 26 deletions(-)
+ create mode 100644 RUN_RLE.bat
+Enumerating objects: 16, done.
+Counting objects: 100% (16/16), done.
+Delta compression using up to 16 threads
+Compressing objects: 100% (9/9), done.
+Writing objects: 100% (9/9), 8.56 KiB | 1.43 MiB/s, done.
+Total 9 (delta 6), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (6/6), completed with 6 local objects.
+To https://github.com/Nemeca99/RLE.git
+   77790f9..aed407c  main -> main
+```
 
 ---
 

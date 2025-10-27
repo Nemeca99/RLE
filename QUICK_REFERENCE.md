@@ -34,7 +34,9 @@ python kia_validate.py sessions/recent/rle_20251027_04.csv
 
 ---
 
-## 📊 CSV Columns Reference
+## 📊 CSV Columns Reference (Schema v0.3.0 - FROZEN)
+
+**Schema frozen 2025-10-27** - Column order and types guaranteed stable for analysis tools.
 
 | Column | Type | Description | Example |
 |--------|------|-------------|---------|
