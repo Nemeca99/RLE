@@ -25,21 +25,53 @@ echo.
 
 REM Step 1: Check Python
 echo [1/5] Checking Python installation...
+
+REM Try 'python' first
 python --version >nul 2>&1
-if errorlevel 1 (
-    echo   ERROR: Python not found!
-    echo   Please install Python 3.10+ from https://python.org
-    pause
-    exit /b 1
+if %errorlevel% == 0 (
+    set PYTHON_CMD=python
+    goto python_found
 )
-python --version
-echo   OK: Python found!
+
+REM Try 'py' launcher
+py --version >nul 2>&1
+if %errorlevel% == 0 (
+    set PYTHON_CMD=py
+    goto python_found
+)
+
+REM Try 'python3'
+python3 --version >nul 2>&1
+if %errorlevel% == 0 (
+    set PYTHON_CMD=python3
+    goto python_found
+)
+
+REM Python not found
+echo   ERROR: Python not found in PATH!
+echo.
+echo   Python is installed but not in your system PATH.
+echo.
+echo   Solutions:
+echo   1. Reinstall Python and check "Add Python to PATH"
+echo   2. Or manually add Python to your PATH
+echo   3. Or use Python Launcher (py) by installing it
+echo.
+echo   Download: https://python.org/downloads/
+echo.
+pause
+exit /b 1
+
+:python_found
+echo   Found Python command: %PYTHON_CMD%
+%PYTHON_CMD% --version
+echo   OK: Python ready!
 echo.
 
 REM Step 2: Install dependencies
 echo [2/5] Installing dependencies...
 echo   This may take a minute the first time...
-pip install -q -r lab/requirements_lab.txt --disable-pip-version-check
+%PYTHON_CMD% -m pip install -q -r lab/requirements_lab.txt --disable-pip-version-check
 if errorlevel 1 (
     echo   WARNING: Some dependencies may not have installed correctly
     echo   Continuing anyway...
@@ -58,7 +90,7 @@ echo.
 REM Step 4: Start monitor
 echo [4/5] Starting hardware monitor...
 echo   Monitor will write to: lab\sessions\recent\rle_YYYYMMDD_HH.csv
-start "RLE Monitor" /MIN cmd /c "cd lab && python start_monitor.py --mode gpu --sample-hz 1 && pause"
+start "RLE Monitor" /MIN cmd /c "cd lab && %PYTHON_CMD% start_monitor.py --mode gpu --sample-hz 1 && pause"
 timeout /t 3 /nobreak >nul
 echo   OK: Monitor started!
 echo.
@@ -66,7 +98,7 @@ echo.
 REM Step 5: Start dashboard
 echo [5/5] Starting Streamlit dashboard...
 echo   Dashboard will open in your browser at http://localhost:8501
-start "RLE Dashboard" cmd /c "cd lab\monitoring && streamlit run rle_streamlit.py --server.headless=false && pause"
+start "RLE Dashboard" cmd /c "cd lab\monitoring && %PYTHON_CMD% -m streamlit run rle_streamlit.py --server.headless=false && pause"
 echo   OK: Dashboard starting!
 echo.
 
@@ -85,7 +117,7 @@ echo     2. Check taskbar for "RLE Monitor" window
 echo     3. Close that window to stop the monitor
 echo.
 echo   Analyzing your session later:
-echo     python lab\analyze_session.py
+echo     %PYTHON_CMD% lab\analyze_session.py
 echo.
 echo ========================================
 echo.
