@@ -17572,11 +17572,218 @@ Lines added: 109, lines removed: 1
 
 ---
 
+Creating a combined launcher that starts the monitor and LM Studio:
 
 
 ---
 
 Tool use: **write**
+
+
+<details><summary>Edit file: run_monitor_for_ai.bat</summary>
+
+**Chunk 1**
+Lines added: 51, lines removed: 1
+
+```diff
+@@ -1,1 +1,51 @@
+- 
++ @echo off
++ REM ========================================
++ REM RLE Monitor for AI Workloads
++ REM ========================================
++ REM
++ REM This starts the monitor, then you can:
++ REM   - Run LM Studio (load a model, generate text)
++ REM   - Or run the AI stress test: python lab\stress\ai_sim_load.py
++ REM
++ REM The monitor will capture all GPU usage automatically
++ REM
++ 
++ title RLE Monitor - AI Workload Session
++ 
++ echo.
++ echo ========================================
++ echo   RLE Monitor for AI/AI Workloads
++ echo ========================================
++ echo.
++ echo Starting monitor...
++ echo.
++ 
++ REM Start monitor in a separate window so user can see progress
++ start "RLE Monitor" cmd /c "cd /d %~dp0lab && C:\Users\nemec\AppData\Local\Programs\Python\Python311\python.exe start_monitor.py --mode gpu --sample-hz 1 && pause"
++ 
++ timeout /t 3 /nobreak >nul
++ 
++ echo.
++ echo Monitor is now running!
++ echo.
++ echo What to do next:
++ echo.
++ echo Option 1 - Use LM Studio:
++ echo   1. Open LM Studio
++ echo   2. Load a model (any size)
++ echo   3. Generate some text - this will load the GPU
++ echo   4. The monitor is capturing everything
++ echo.
++ echo Option 2 - Synthetic AI Load:
++ echo   Run: python lab\stress\ai_sim_load.py --duration 30
++ echo   This simulates AI workload without needing LM Studio
++ echo.
++ echo When done:
++ echo   Press Ctrl+C in the monitor window to stop
++ echo   A REPORT_rle_YYYYMMDD_HH.txt will be generated automatically
++ echo.
++ echo ========================================
++ echo.
++ 
++ pause
++ 
+```
+
+</details>
+
+---
+
+
+
+---
+
+Committing changes:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git add -A && git commit -m "feat: Add AI workload monitoring support (LM Studio + synthetic load generator)" && git push
+```
+
+```
+PS F:\RLE> git add -A && git commit -m "feat: Add AI workload monitoring support (LM Studio + synthetic load generator)" && git push
+[main 70c9901] feat: Add AI workload monitoring support (LM Studio + synthetic load generator)
+ 5 files changed, 1901 insertions(+)
+ create mode 100644 lab/0
+ create mode 100644 lab/stress/ai_sim_load.py
+ create mode 100644 run_monitor_for_ai.bat
+ create mode 100644 run_with_lmstudio.bat
+Enumerating objects: 17, done.
+Counting objects: 100% (17/17), done.
+Delta compression using up to 16 threads
+Compressing objects: 100% (10/10), done.
+Writing objects: 100% (11/11), 12.20 KiB | 1.52 MiB/s, done.
+Total 11 (delta 5), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (5/5), completed with 5 local objects.
+To https://github.com/Nemeca99/RLE.git
+   cce1a4d..70c9901  main -> main
+```
+
+---
+
+
+
+---
+
+AI workload monitoring setup
+
+Two options:
+
+Option 1: LM Studio (recommended)
+```batch
+# Just start the monitor
+run_monitor_for_ai.bat
+```
+
+Then:
+1. Open LM Studio
+2. Load any model
+3. Generate text
+4. Monitor captures GPU usage
+
+Option 2: Synthetic AI load (no LM Studio needed)
+```batch
+# Terminal 1: Start monitor
+start_monitor_simple.bat
+
+# Terminal 2: Run synthetic load
+python lab\stress\ai_sim_load.py --duration 30
+```
+
+This simulates AI workload and exercises the GPU like LLM inference.
+
+Features
+- 30-minute sessions
+- Pattern options: steady (90%), bursty (variable), ramp (50%→95%)
+- Real-time metrics (util, temp, power, fan)
+
+Files
+- `run_monitor_for_ai.bat` — launcher
+- `lab/stress/ai_sim_load.py` — synthetic load
+- Both generate data for analysis
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git add -A && git commit -m "docs: Finalize AI workload monitoring setup" && git push
+```
+
+```
+PS F:\RLE> git add -A && git commit -m "docs: Finalize AI workload monitoring setup" && git push
+On branch main
+Your branch is up to date with 'origin/main'.
+```
+
+---
+
+
+
+---
+
+Setup is complete. To use it while working:
+
+**When you're at work and want to test without gaming:**
+
+1. Start the monitor:
+   - `run_monitor_for_ai.bat` (shows instructions)
+   - Or `start_monitor_simple.bat` (terminal only)
+
+2. Generate GPU load:
+   - Open LM Studio → load a model → generate text
+   - Or run: `python lab\stress\ai_sim_load.py`
+   - Or leave the monitor running with background Windows tasks
+
+3. Stop and report:
+   - Press Ctrl+C in the monitor terminal
+   - Auto-generates `REPORT_rle_YYYYMMDD_HH.txt`
+   - Shows if the GPU handled the AI workload efficiently
+
+The monitor will capture GPU usage from any workload, including LM Studio, so no additional integration is needed.
+
+---
+
+_**User (2025-10-27 02:28Z)**_
+
+ok im running it, the goal is i just need tests to push the gpu for us to capture the data, and then use that to refine our measurements to form somethign real
+
+---
+
+_**Assistant (default)**_
+
+
+
+---
+
+
+Checking the current session data:
+
+
+---
+
+Tool use: **run_terminal_cmd**
 
 ---
 
