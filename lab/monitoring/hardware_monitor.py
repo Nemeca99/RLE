@@ -4,14 +4,29 @@ import psutil
 
 # NVML (GPU)
 try:
-    # Try nvidia-ml-py3 first (recommended)
-    from nvidia_ml_py3 import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetUtilizationRates, nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature, nvmlDeviceGetFanSpeed, nvmlDeviceGetComputeRunningProcesses
+    # Try nvidia_ml_py3 first (recommended, newer package)
+    import nvidia_ml_py3 as nvml
+    nvmlInit, nvmlDeviceGetHandleByIndex = nvml.nvmlInit, nvml.nvmlDeviceGetHandleByIndex
+    nvmlDeviceGetUtilizationRates = nvml.nvmlDeviceGetUtilizationRates
+    nvmlDeviceGetPowerUsage = nvml.nvmlDeviceGetPowerUsage
+    nvmlDeviceGetTemperature = nvml.nvmlDeviceGetTemperature
+    nvmlDeviceGetFanSpeed = nvml.nvmlDeviceGetFanSpeed
+    nvmlDeviceGetComputeRunningProcesses = nvml.nvmlDeviceGetComputeRunningProcesses
     from nvidia_ml_py3.nvml import NVML_TEMPERATURE_GPU, NVML_TEMPERATURE_MEMORY
     NVML_OK = True
-except Exception:
+except ImportError:
     try:
-        # Fallback for deprecated pynvml
-        from pynvml import *
+        # Fallback for pynvml (older but available)
+        import pynvml as nvml
+        nvmlInit = nvml.nvmlInit
+        nvmlDeviceGetHandleByIndex = nvml.nvmlDeviceGetHandleByIndex
+        nvmlDeviceGetUtilizationRates = nvml.nvmlDeviceGetUtilizationRates
+        nvmlDeviceGetPowerUsage = nvml.nvmlDeviceGetPowerUsage
+        nvmlDeviceGetTemperature = nvml.nvmlDeviceGetTemperature
+        nvmlDeviceGetFanSpeed = nvml.nvmlDeviceGetFanSpeed
+        nvmlDeviceGetComputeRunningProcesses = nvml.nvmlDeviceGetComputeRunningProcesses
+        NVML_TEMPERATURE_GPU = nvml.NVML_TEMPERATURE_GPU
+        NVML_TEMPERATURE_MEMORY = nvml.NVML_TEMPERATURE_MEMORY
         NVML_OK = True
     except Exception:
         NVML_OK = False
