@@ -248,4 +248,5 @@ This breaks backward compatibility - old CSVs won't have these columns.
 - Created CHANGELOG.md for version tracking
 - Added example baseline session CSV
 - **RLE Formula Validation**: Independently verified by ChatGPT - formula computation matches logged values with <0.0001 precision across test samples
+- **Agent Identity System**: Created `Kia.yaml` config, `kia_validate.py` with markdown reports and logging, added agent tracking to CHANGELOG
 
