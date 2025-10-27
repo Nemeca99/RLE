@@ -21,7 +21,7 @@ echo Starting monitor...
 echo.
 
 REM Start monitor in a separate window so user can see progress
-start "RLE Monitor" cmd /c "cd /d %~dp0lab && C:\Users\nemec\AppData\Local\Programs\Python\Python311\python.exe start_monitor.py --mode gpu --sample-hz 1 && pause"
+start "RLE Monitor" cmd /c "cd /d %~dp0lab && ..\venv\Scripts\python.exe start_monitor.py --mode gpu --sample-hz 1 && pause"
 
 timeout /t 3 /nobreak >nul
 
