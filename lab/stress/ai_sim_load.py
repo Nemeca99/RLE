@@ -54,13 +54,19 @@ def generate_ai_like_load(duration_minutes=30, utilization_pattern="steady"):
             else:
                 target_util = 80.0
             
-            # Generate GPU work using matrix operations
-            # This keeps the GPU busy without needing actual ML code
-            a = np.random.rand(1000, 1000).astype(np.float32)
-            b = np.random.rand(1000, 1000).astype(np.float32)
+            # Generate GPU work using large matrix operations
+            # Large matrices + extra work to actually stress GPU
+            size = 2000  # Large enough to actually use GPU compute
             
-            # Matrix multiply to generate load
+            a = np.random.rand(size, size).astype(np.float32)
+            b = np.random.rand(size, size).astype(np.float32)
+            
+            # Heavy matrix multiplication to stress GPU
             result = a @ b
+            
+            # Additional work to hit target utilization
+            result = result @ a
+            result = result @ b
             
             # Adjust to target utilization
             if sample % 10 == 0:
