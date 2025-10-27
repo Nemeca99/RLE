@@ -11983,3 +11983,227 @@ To https://github.com/Nemeca99/RLE.git
 
 ---
 
+Freezing the CSV schema by documenting it in ARCHITECTURE.md:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: lab/docs/ARCHITECTURE.md</summary>
+
+**Chunk 1**
+Lines added: 41, lines removed: undefined
+
+```diff
+@@ -213,4 +213,45 @@
+  - Change sampling rate (affects detection latency)
+  - Modify RLE formula (breaks backward compatibility)
++ 
++ ## Public Interface: CSV Schema (Frozen v0.3.0)
++ 
++ The CSV schema is now **frozen** and guaranteed stable for analysis tools.
++ 
++ **Schema Version**: v0.3.0 (2025-10-27)
++ 
++ ```csv
++ timestamp,device,rle_smoothed,rle_raw,E_th,E_pw,temp_c,vram_temp_c,power_w,util_pct,a_load,t_sustain_s,fan_pct,rolling_peak,collapse,alerts
++ ```
++ 
++ **Column Definitions** (16 columns total):
++ 
++ | Position | Column | Type | Description | Example |
++ |----------|--------|------|-------------|---------|
++ | 1 | `timestamp` | ISO string | UTC timestamp | `2025-10-27T04:33:22.489Z` |
++ | 2 | `device` | string | "gpu" or "cpu" | `gpu` |
++ | 3 | `rle_smoothed` | float | 5-sample rolling avg RLE | `0.723456` |
++ | 4 | `rle_raw` | float | Instantaneous RLE | `0.845678` |
++ | 5 | `E_th` | float | Thermal efficiency | `0.580000` |
++ | 6 | `E_pw` | float | Power efficiency | `1.350000` |
++ | 7 | `temp_c` | float | Core temp (°C) | `75.00` |
++ | 8 | `vram_temp_c` | float | VRAM/junction temp (°C) | `82.00` |
++ | 9 | `power_w` | float | Power draw (W) | `198.50` |
++ | 10 | `util_pct` | float | Utilization (%) | `99.00` |
++ | 11 | `a_load` | float | Normalized load | `0.993` |
++ | 12 | `t_sustain_s` | float | Seconds to thermal limit | `310.0` |
++ | 13 | `fan_pct` | int | Fan speed (%) | `80` |
++ | 14 | `rolling_peak` | float | Adaptive peak reference | `1.001545` |
++ | 15 | `collapse` | int | Collapse flag (0/1) | `1` |
++ | 16 | `alerts` | string | Pipe-separated warnings | `GPU_TEMP\|VRAM_TEMP` |
++ 
++ **Breaking Changes Policy**:
++ - ✅ New columns may be added (append only, nullable for old data)
++ - ❌ Existing columns WILL NOT be removed
++ - ❌ Column order WILL NOT change
++ - ❌ Data types WILL NOT change
++ 
++ **Backward Compatibility**:
++ - Tools should handle missing `E_th`, `E_pw`, `rolling_peak` (v0.2.0 and earlier)
++ - Analysis tools check for column existence before using
+  
+  ## Related Documentation
+```
+
+</details>
+
+---
+
+
+
+---
+
+Updating QUICK_REFERENCE.md to include the frozen schema.
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: QUICK_REFERENCE.md</summary>
+
+**Chunk 1**
+Lines added: 3, lines removed: 1
+
+```diff
+@@ -35,5 +35,7 @@
+  ---
+  
+- ## 📊 CSV Columns Reference
++ ## 📊 CSV Columns Reference (Schema v0.3.0 - FROZEN)
++ 
++ **Schema frozen 2025-10-27** - Column order and types guaranteed stable for analysis tools.
+  
+  | Column | Type | Description | Example |
+```
+
+</details>
+
+---
+
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git add -A && git commit -m "docs: Freeze CSV schema v0.3.0 with breaking changes policy" && git push
+```
+
+```
+PS F:\RLE> git add -A && git commit -m "docs: Freeze CSV schema v0.3.0 with breaking changes policy" && git push      
+[main 1c7c726] docs: Freeze CSV schema v0.3.0 with breaking changes policy
+ 3 files changed, 841 insertions(+), 1 deletion(-)
+Enumerating objects: 17, done.
+Counting objects: 100% (17/17), done.
+Delta compression using up to 16 threads
+Compressing objects: 100% (9/9), done.
+Writing objects: 100% (9/9), 8.24 KiB | 1.37 MiB/s, done.
+Total 9 (delta 7), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (7/7), completed with 7 local objects.
+To https://github.com/Nemeca99/RLE.git
+   aed407c..1c7c726  main -> main
+```
+
+---
+
+
+
+---
+
+## Done: Public interface and one-click launch
+
+### 1. **`RUN_RLE.bat` — one-click launcher**
+Located at the repo root.
+
+It:
+- Checks Python installation
+- Installs dependencies
+- Starts the monitor
+- Opens the Streamlit dashboard
+- Prints the CSV save path
+- Shows stop instructions
+
+Usage: Double-click `RUN_RLE.bat`
+
+---
+
+### 2. **CSV schema v0.3.0 frozen**
+
+Documented in `lab/docs/ARCHITECTURE.md`:
+
+- 16 columns officially frozen (order/type guaranteed)
+- Breaking changes policy
+- Backward compatibility notes
+- Column reference table
+
+Schema:
+```csv
+timestamp,device,rle_smoothed,rle_raw,E_th,E_pw,temp_c,vram_temp_c,power_w,util_pct,a_load,t_sustain_s,fan_pct,rolling_peak,collapse,alerts
+```
+
+Policy:
+- New columns: append only (nullable for old data)
+- Existing columns: removal blocked
+- Column order: fixed
+- Data types: fixed
+
+---
+
+### What changed
+- `README.md`: One-click launch at the top
+- `GETTING_STARTED.md`: One-click launch featured as primary
+- `QUICK_REFERENCE.md`: Schema frozen v0.3.0
+- `AGENTS.md`: Tracked one-click launcher
+- `ARCHITECTURE.md`: Full schema spec with policy
+
+---
+
+### Result
+- Double-click setup with no terminal steps
+- Public interface locked for analysis tool stability
+- Uses a one-click launcher; docs reflect this
+
+---
+
+_**User (2025-10-27 02:28Z)**_
+
+Auto-generate the after-action report
+
+When the user closes the monitor, dump a session summary text/markdown file next to the CSV, like:
+lab/sessions/recent/REPORT_LAST_RUN.txt
+
+That summary should include:
+
+Session duration
+
+Max / mean temp
+
+Max / mean power
+
+Mean RLE and max RLE
+
+Collapse rate and whether that’s healthy (<5% good, >15% bad)
+
+Basic health verdict (“System healthy” / “Thermal limit risk” / “Power capped often”)
+
+You already have all of this logic in analyze_session.py and kia_validate. It’s literally copy/paste plus file write. You’re not inventing anything new.
+
+Why that’s important: it removes you, the explainer, from the loop. Someone can run RLE, game, stop, and get told in plain English “yeah your cooling is fine, chill” or “your card is slamming into power limit nonstop, consider undervolting.”
+
+At that point, you don’t just have monitoring. You have a health check product.
+
+Minor note: do not touch collapse detection now. You already got the false positives down from 51 percent to single digits using rolling peak decay, 7-second hysteresis, and evidence requirements (thermal or power), and you logged that in CHANGELOG as part of 0.3.0. That’s gold. That’s credibility. Don’t destabilize it while you’re productizing.
+
+also, add in so it also monitors processes so we can see waht processes is using the energny and resources
+
+---
+
+_**Assistant (default)**_
+
+
+
+---
+

@@ -5,7 +5,7 @@ import psutil
 # NVML (GPU)
 try:
     # Try nvidia-ml-py3 first (recommended)
-    from nvidia_ml_py3 import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetUtilizationRates, nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature, nvmlDeviceGetFanSpeed
+    from nvidia_ml_py3 import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetUtilizationRates, nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature, nvmlDeviceGetFanSpeed, nvmlDeviceGetComputeRunningProcesses
     from nvidia_ml_py3.nvml import NVML_TEMPERATURE_GPU, NVML_TEMPERATURE_MEMORY
     NVML_OK = True
 except Exception:
@@ -220,7 +220,8 @@ def compute_rle(util_hist, temp_hist, q_in_w, a_load, temp_limit, dt, max_t=600.
 def monitor(args):
     below_normal_priority()
     tick = 1.0 / max(1, int(args.sample_hz))
-    writer_get = rotate_writer("logs")
+    # Write to sessions/recent/ directory
+    writer_get = rotate_writer("sessions/recent")
 
     # HWiNFO CSV tail (optional)
     hw_targets = [
