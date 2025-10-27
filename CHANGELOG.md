@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [0.3.0] - 2025-10-27
 
+### Agent Activity (Kia)
+- Identified and fixed collapse detection false positives (51% → single digits)
+- Created comprehensive documentation suite
+- Designed and implemented batch analysis tools
+- Validated RLE formula with external verification (ChatGPT)
+- Organized lab structure for maintainability
+- Added agent identity and personality parameters
+
 ### Major Improvements
 - **Improved collapse detection** with evidence requirements
   - Rolling peak with decay (0.998 factor, 3% drop per 10s)
