@@ -11,51 +11,11 @@ try:
         nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature, nvmlDeviceGetFanSpeed,
         nvmlDeviceGetComputeRunningProcesses
     )
-    
-    # Try to import optional functions (may not be available in all pynvml versions)
-    try:
-        from pynvml import nvmlDeviceGetClockInfo, nvmlDeviceGetMemoryInfo
-    except ImportError:
-        nvmlDeviceGetClockInfo = None
-        nvmlDeviceGetMemoryInfo = None
-    
-    try:
-        from pynvml import nvmlDeviceGetPerformanceState
-    except ImportError:
-        nvmlDeviceGetPerformanceState = None
-    
-    try:
-        from pynvml import nvmlDeviceGetThrottleReasons
-    except ImportError:
-        nvmlDeviceGetThrottleReasons = None
-    
-    try:
-        from pynvml import nvmlDeviceGetPowerManagementLimitConstraints
-    except ImportError:
-        nvmlDeviceGetPowerManagementLimitConstraints = None
     # Constants for temperature sensors
     # NVML_TEMPERATURE_GPU = 0 (core temp)
     # NVML_TEMPERATURE_MEMORY = 1 (memory junction)
     NVML_TEMPERATURE_GPU = 0
     NVML_TEMPERATURE_MEMORY = 1
-    
-    # Clock types
-    NVML_CLOCK_GRAPHICS = 0  # GPU core clock
-    NVML_CLOCK_MEM = 4       # Memory clock
-    
-    # Performance state constants
-    NVML_CLOCK_THROTTLE_REASON_NONE = 0x0000000000000000
-    NVML_CLOCK_THROTTLE_REASON_GPU_IDLE = 0x0000000000000001
-    NVML_CLOCK_THROTTLE_REASON_APPLICATIONS_CLOCK_SETTING = 0x0000000000000002
-    NVML_CLOCK_THROTTLE_REASON_SW_POWER_CAP = 0x0000000000000004
-    NVML_CLOCK_THROTTLE_REASON_HW_SLOWDOWN = 0x0000000000000008
-    NVML_CLOCK_THROTTLE_REASON_SYNC_BOOST = 0x0000000000000010
-    NVML_CLOCK_THROTTLE_REASON_SW_THERMAL_SLOWDOWN = 0x0000000000000020
-    NVML_CLOCK_THROTTLE_REASON_HW_THERMAL_SLOWDOWN = 0x0000000000000040
-    NVML_CLOCK_THROTTLE_REASON_HW_POWER_BRAKE_SLOWDOWN = 0x0000000000000080
-    NVML_CLOCK_THROTTLE_REASON_DISPLAY_CLOCK_SETTING = 0x0000000000000100
-    NVML_CLOCK_THROTTLE_REASON_UNKNOWN = 0x8000000000000000
-    
     NVML_OK = True
 except Exception as e:
     NVML_OK = False
@@ -137,8 +97,7 @@ def rotate_writer(base_dir):
             writer = csv.writer(fh)
             if new_file:
                 writer.writerow(["timestamp","device","rle_smoothed","rle_raw","E_th","E_pw","temp_c","vram_temp_c",
-                                 "power_w","util_pct","a_load","t_sustain_s","fan_pct","rolling_peak","collapse","alerts",
-                                 "gpu_clock_mhz","mem_clock_mhz","mem_used_mb","mem_total_mb","perf_state","throttle_reasons","power_limit_w"])
+                                 "power_w","util_pct","a_load","t_sustain_s","fan_pct","rolling_peak","collapse","alerts"])
             current_key = key
         return writer
     return get
@@ -222,7 +181,7 @@ class GpuNVML:
 
     def poll(self):
         h = self.handle
-        util = nvmlDeviceGetUtilizationRates(h).gpu  # % 
+        util = nvmlDeviceGetUtilizationRates(h).gpu  # %
         power = nvmlDeviceGetPowerUsage(h) / 1000.0  # W
         temp_core = nvmlDeviceGetTemperature(h, NVML_TEMPERATURE_GPU)  # °C
         # Try memory/junction temp if supported
@@ -232,61 +191,10 @@ class GpuNVML:
         except Exception:
             vram_temp = None
         try:
-            fan = nvmlDeviceGetFanSpeed(h)  # % 
+            fan = nvmlDeviceGetFanSpeed(h)  # %
         except Exception:
             fan = 0
-        
-        # Additional metrics
-        gpu_clock = None
-        mem_clock = None
-        mem_used = None
-        mem_total = None
-        perf_state = None
-        throttle_reasons = 0
-        power_limit = None
-        
-        try:
-            if nvmlDeviceGetClockInfo is not None:
-                gpu_clock = nvmlDeviceGetClockInfo(h, NVML_CLOCK_GRAPHICS)
-        except Exception:
-            pass
-        
-        try:
-            if nvmlDeviceGetClockInfo is not None:
-                mem_clock = nvmlDeviceGetClockInfo(h, NVML_CLOCK_MEM)
-        except Exception:
-            pass
-        
-        try:
-            if nvmlDeviceGetMemoryInfo is not None:
-                mem_info = nvmlDeviceGetMemoryInfo(h)
-                mem_used = mem_info.used / (1024*1024)  # MB
-                mem_total = mem_info.total / (1024*1024)  # MB
-        except Exception:
-            pass
-        
-        try:
-            if nvmlDeviceGetPerformanceState is not None:
-                perf_state = nvmlDeviceGetPerformanceState(h)
-        except Exception:
-            pass
-        
-        try:
-            if nvmlDeviceGetThrottleReasons is not None:
-                throttle_reasons = nvmlDeviceGetThrottleReasons(h)
-        except Exception:
-            pass
-        
-        try:
-            if nvmlDeviceGetPowerManagementLimitConstraints is not None:
-                limits = nvmlDeviceGetPowerManagementLimitConstraints(h)
-                power_limit = limits[0] / 1000.0  # W (min power limit)
-        except Exception:
-            pass
-        
-        return dict(util=util, power=power, temp_core=temp_core, temp_vram=vram_temp, fan=fan,
-                   gpu_clock=gpu_clock, mem_clock=mem_clock, mem_used=mem_used, mem_total=mem_total,
-                   perf_state=perf_state, throttle_reasons=throttle_reasons, power_limit=power_limit)
+        return dict(util=util, power=power, temp_core=temp_core, temp_vram=vram_temp, fan=fan)
 
 # ----------------------------
 # RLE computation
@@ -423,21 +331,11 @@ def monitor(args):
             if a_load_gpu > 1.10:
                 alerts.append("GPU_A_LOAD>1.10")
 
-            # Extract new metrics for CSV
-            gpu_clk = "" if g.get('gpu_clock') is None else f"{g['gpu_clock']:.0f}"
-            mem_clk = "" if g.get('mem_clock') is None else f"{g['mem_clock']:.0f}"
-            mem_use = "" if g.get('mem_used') is None else f"{g['mem_used']:.0f}"
-            mem_tot = "" if g.get('mem_total') is None else f"{g['mem_total']:.0f}"
-            perf = "" if g.get('perf_state') is None else f"{g['perf_state']:.0f}"
-            throttle = "" if g.get('throttle_reasons', 0) == 0 else f"{g.get('throttle_reasons', 0):016x}"
-            pwr_lim = "" if g.get('power_limit') is None else f"{g['power_limit']:.1f}"
-            
             w = writer_get()
             w.writerow([ts,"gpu",f"{rle_sm_gpu:.6f}",f"{rle_raw_gpu:.6f}",
                         f"{e_th_gpu:.6f}", f"{e_pw_gpu:.6f}", f"{g_temp:.2f}", f"{'' if g_vram_temp is None else f'{g_vram_temp:.2f}'}",
                         f"{g_power:.2f}", f"{g_util:.2f}", f"{a_load_gpu:.3f}",
-                        f"{t_sus_gpu:.1f}", f"{g_fan}", f"{gpu_peak_val:.6f}", collapsed_gpu, "|".join(alerts),
-                        gpu_clk, mem_clk, mem_use, mem_tot, perf, throttle, pwr_lim])
+                        f"{t_sus_gpu:.1f}", f"{g_fan}", f"{gpu_peak_val:.6f}", collapsed_gpu, "|".join(alerts)])
 
         # -------- CPU --------
         if args.mode in ("cpu","both"):
@@ -506,8 +404,7 @@ def monitor(args):
             w.writerow([ts,"cpu",f"{rle_sm_cpu:.6f}",f"{rle_raw_cpu:.6f}",
                         f"{e_th_cpu:.6f}", f"{e_pw_cpu:.6f}", f"{'' if c_temp is None else f'{c_temp:.2f}'}","",
                         f"{'' if c_power is None else f'{c_power:.2f}'}", f"{c_util:.2f}", f"{a_load_cpu:.3f}",
-                        f"{t_sus_cpu:.1f}","", f"{cpu_peak_val:.6f}", collapsed_cpu, "|".join(alerts_cpu),
-                        "", "", "", "", "", "", ""])  # GPU-specific columns empty for CPU
+                        f"{t_sus_cpu:.1f}","", f"{cpu_peak_val:.6f}", collapsed_cpu, "|".join(alerts_cpu)])
 
         # Sleep
         time.sleep(tick)
