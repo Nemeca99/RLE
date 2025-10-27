@@ -76,7 +76,8 @@ def below_normal_priority():
         pass
 
 def now_iso():
-    return datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    """Return ISO UTC timestamp. Already using UTC via datetime.utcnow()"""
+    return datetime.utcnow().isoformat() + 'Z'  # Ensures Z timezone suffix
 
 def ensure_dir(path):
     os.makedirs(path, exist_ok=True)
