@@ -4,22 +4,36 @@
 
 ### Monitor Won't Start
 
-**Symptoms**: `hardware_monitor.py` fails to initialize
+**Symptoms**: `hardware_monitor.py` fails to initialize, typically with:
+```
+pynvml.NVMLError_LibraryNotFound: NVML Shared Library Not Found
+```
+
+**Root Cause**: The `nvidia-ml-py3` package uses a redirector that may fail to find `nvml.dll` on Windows, even when the DLL exists in System32.
 
 **Solutions**:
-```bash
-# 1. Check NVML installation
-python -c "import pynvml; pynvml.nvmlInit()"
 
-# 2. Verify GPU is accessible
+```bash
+# 1. Check if nvml.dll exists
+dir C:\Windows\System32\nvml.dll
+
+# 2. Uninstall conflicting packages and install standalone pynvml
+pip uninstall nvidia-ml-py3 -y
+pip install "pynvml==11.5.0"
+
+# 3. Verify NVML initialization
+python -c "import pynvml; pynvml.nvmlInit(); print('NVML OK')"
+
+# 4. If step 3 fails, check nvidia-smi (driver installation)
 nvidia-smi
 
-# 3. Reinstall dependencies
-pip install -r requirements_lab.txt --force-reinstall
-
-# 4. Check Python version (needs 3.10+)
-python --version
+# 5. Force DLL path (already implemented in hardware_monitor.py)
+# The monitor auto-detects System32 DLL and loads it before initialization
 ```
+
+**Key Fix**: The monitor now force-loads `nvml.dll` from `C:\Windows\System32` before calling `nvmlInit()`. This was added in Oct 2025 after discovering that redirector packages sometimes fail even when the DLL is present.
+
+**Alternative**: If GPU monitoring fails, run monitor with `--mode cpu` for CPU-only monitoring.
 
 ### High False Positive Collapse Rate (>50%)
 

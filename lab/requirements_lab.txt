@@ -1,9 +1,7 @@
 # RLE Monitoring Lab - Core Dependencies
 # GPU/CPU monitoring
 psutil>=5.9.0
-nvidia-ml-py3>=12.535.133
-# Alternative fallback
-# pynvml>=11.5.0
+nvidia-ml-py>=12.535.133
 
 # Data analysis
 pandas>=2.0.0
@@ -26,5 +24,5 @@ jupyter>=1.0.0
 # Installation:
 # pip install -r requirements_lab.txt
 # Or for minimal monitoring only:
-# pip install psutil nvidia-ml-py3 pandas
+# pip install psutil pynvml==11.5.0 pandas
 

@@ -2,21 +2,50 @@ import argparse, csv, os, time, statistics
 from datetime import datetime
 import psutil
 
-# NVML (GPU)
+# NVML (GPU) - Pre-load DLL first on Windows
+NVML_OK = False
+pynvml = None
+nvmlInit = None
+nvmlDeviceGetHandleByIndex = None
+nvmlDeviceGetUtilizationRates = None
+nvmlDeviceGetPowerUsage = None
+nvmlDeviceGetTemperature = None
+nvmlDeviceGetFanSpeed = None
+nvmlDeviceGetComputeRunningProcesses = None
+
 try:
-    # Import pynvml (works with nvidia-ml-py backend)
     import pynvml
+    NVML_OK = True
+    
+    # On Windows, force-load the DLL from System32 before any operations
+    if os.name == 'nt':
+        import ctypes
+        system32_dll = os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'System32', 'nvml.dll')
+        if os.path.exists(system32_dll):
+            # Force load the DLL into memory
+            ctypes.CDLL(system32_dll)
+            print(f"[NVML] Force-loaded nvml.dll from System32")
+            
+            # Now initialize pynvml
+            try:
+                pynvml.nvmlInit()
+            except Exception as e:
+                print(f"[NVML] Initialization failed: {e}")
+                NVML_OK = False
+        else:
+            print(f"[NVML] nvml.dll not found in System32")
+    
+    # Import all the functions we need
     from pynvml import (
         nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetUtilizationRates,
         nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature, nvmlDeviceGetFanSpeed,
         nvmlDeviceGetComputeRunningProcesses
     )
+    
     # Constants for temperature sensors
-    # NVML_TEMPERATURE_GPU = 0 (core temp)
-    # NVML_TEMPERATURE_MEMORY = 1 (memory junction)
-    NVML_TEMPERATURE_GPU = 0
-    NVML_TEMPERATURE_MEMORY = 1
-    NVML_OK = True
+    NVML_TEMPERATURE_GPU = 0  # core temp
+    NVML_TEMPERATURE_MEMORY = 1  # memory junction
+    
 except Exception as e:
     NVML_OK = False
     print(f"NVML import failed: {e}")
@@ -96,8 +125,9 @@ def rotate_writer(base_dir):
             fh = open(fname, "a", newline="", buffering=1)
             writer = csv.writer(fh)
             if new_file:
-                writer.writerow(["timestamp","device","rle_smoothed","rle_raw","E_th","E_pw","temp_c","vram_temp_c",
-                                 "power_w","util_pct","a_load","t_sustain_s","fan_pct","rolling_peak","collapse","alerts"])
+                writer.writerow(["timestamp","device","rle_smoothed","rle_raw","rle_norm","E_th","E_pw","temp_c","vram_temp_c",
+                                 "power_w","util_pct","a_load","t_sustain_s","fan_pct","rolling_peak","collapse","alerts",
+                                 "cpu_freq_ghz","cycles_per_joule"])
             current_key = key
         return writer
     return get
@@ -176,8 +206,15 @@ class GpuNVML:
     def __init__(self):
         if not NVML_OK:
             raise RuntimeError("NVML not available")
-        nvmlInit()
+        
+        # Initialize NVML
+        try:
+            nvmlInit()
+        except Exception as e:
+            raise RuntimeError(f"Could not initialize NVML: {e}")
+        
         self.handle = nvmlDeviceGetHandleByIndex(0)
+        print("[GPU] NVML initialized successfully")
 
     def poll(self):
         h = self.handle
@@ -197,8 +234,42 @@ class GpuNVML:
         return dict(util=util, power=power, temp_core=temp_core, temp_vram=vram_temp, fan=fan)
 
 # ----------------------------
-# RLE computation
+# RLE computation and normalization
 # ----------------------------
+def normalize_rle(rle, util, device_type="cpu"):
+    """
+    Normalize RLE to 0-1 range based on load level
+    
+    Args:
+        rle: Raw RLE value
+        util: Utilization percentage (0-100)
+        device_type: "cpu" or "gpu"
+    
+    Returns:
+        Normalized RLE (0.0 = baseline, 1.0 = optimal)
+    """
+    if device_type == "cpu":
+        baseline = 0.3   # RLE at minimal load
+        optimal = 5.0    # Peak RLE at sweet spot (33% load)
+        peak_load = 67.0 # Load level where RLE peaks
+    else:  # gpu
+        baseline = 0.1
+        optimal = 3.0
+        peak_load = 60.0
+    
+    # Calculate expected RLE for this utilization level
+    # Using efficiency curve: baseline to optimal, then down after peak
+    if util <= peak_load:
+        expected_rle = baseline + (optimal - baseline) * (util / peak_load)
+    else:
+        # Past peak, efficiency drops
+        expected_rle = optimal - (optimal - baseline * 0.5) * ((util - peak_load) / (100 - peak_load))
+    
+    # Normalize: 1.0 = optimal, 0.0 = baseline
+    normalized = min(1.0, max(0.0, rle / expected_rle))
+    
+    return normalized
+
 def compute_t_sustain(temp_limit, temp_hist, dt, max_t=600.0):
     if len(temp_hist) < 2: return max_t
     dT = temp_hist[-1] - temp_hist[-2]
@@ -292,6 +363,9 @@ def monitor(args):
             )
             rle_hist_gpu.add(rle_raw_gpu)
             rle_sm_gpu = rle_hist_gpu.mean()
+            
+            # Normalize RLE to 0-1 range
+            rle_norm_gpu = normalize_rle(rle_sm_gpu, g_util, device_type="gpu")
 
             # Improved collapse detection with rolling peak and hysteresis
             collapsed_gpu = 0
@@ -332,7 +406,7 @@ def monitor(args):
                 alerts.append("GPU_A_LOAD>1.10")
 
             w = writer_get()
-            w.writerow([ts,"gpu",f"{rle_sm_gpu:.6f}",f"{rle_raw_gpu:.6f}",
+            w.writerow([ts,"gpu",f"{rle_sm_gpu:.6f}",f"{rle_raw_gpu:.6f}",f"{rle_norm_gpu:.6f}",
                         f"{e_th_gpu:.6f}", f"{e_pw_gpu:.6f}", f"{g_temp:.2f}", f"{'' if g_vram_temp is None else f'{g_vram_temp:.2f}'}",
                         f"{g_power:.2f}", f"{g_util:.2f}", f"{a_load_gpu:.3f}",
                         f"{t_sus_gpu:.1f}", f"{g_fan}", f"{gpu_peak_val:.6f}", collapsed_gpu, "|".join(alerts)])
@@ -340,6 +414,15 @@ def monitor(args):
         # -------- CPU --------
         if args.mode in ("cpu","both"):
             c_util = psutil.cpu_percent(interval=None)
+            
+            # Get CPU frequency (MHz -> GHz)
+            try:
+                freq_obj = psutil.cpu_freq()
+                c_freq_mhz = freq_obj.current if freq_obj else None
+                c_freq_ghz = (c_freq_mhz / 1000.0) if c_freq_mhz else None
+            except:
+                c_freq_ghz = None
+            
             c_power = None
             c_temp = None
             if hw:
@@ -358,13 +441,31 @@ def monitor(args):
             # If we have no temp history, synthesize a flat line to keep math stable
             temp_hist = cpu_temp_hist.buf if cpu_temp_hist.buf else [40.0, 40.0]
 
-            a_load_cpu = ( (c_power or 0.0) / args.rated_cpu ) if args.rated_cpu>0 else 0.0
+            # Fallback: estimate CPU power from utilization if no sensor available
+            if c_power is None:
+                # Rough estimate: assume CPU power scales with utilization
+                # Typical CPU: 20-30W idle, 100-125W at full load for desktop
+                c_power = args.rated_cpu * (c_util / 100.0) if args.rated_cpu > 0 else c_util * 1.5
+            
+            # Calculate clock cycles per joule (GHz * seconds per sample / joules)
+            # cycles_per_joule = (GHz * sample_time_sec) / joules
+            sample_time_sec = tick
+            cycles_per_joule = None
+            if c_freq_ghz and c_power and c_power > 0:
+                clock_cycles_per_sample = c_freq_ghz * 1e9 * sample_time_sec  # cycles
+                joules_per_sample = c_power * sample_time_sec  # joules
+                cycles_per_joule = clock_cycles_per_sample / joules_per_sample if joules_per_sample > 0 else None
+
+            a_load_cpu = (c_power / args.rated_cpu) if args.rated_cpu > 0 else 0.0
             rle_raw_cpu, t_sus_cpu, e_th_cpu, e_pw_cpu = compute_rle(
                 cpu_util_hist.buf, temp_hist, (c_power or 0.0), a_load_cpu,
                 args.cpu_temp_limit, tick, DEFAULTS['max_t_sustain']
             )
             rle_hist_cpu.add(rle_raw_cpu)
             rle_sm_cpu = rle_hist_cpu.mean()
+            
+            # Normalize RLE to 0-1 range
+            rle_norm_cpu = normalize_rle(rle_sm_cpu, c_util, device_type="cpu")
 
             # Improved collapse detection with rolling peak and hysteresis
             collapsed_cpu = 0
@@ -401,10 +502,11 @@ def monitor(args):
                 alerts_cpu.append("CPU_A_LOAD>1.10")
 
             w = writer_get()
-            w.writerow([ts,"cpu",f"{rle_sm_cpu:.6f}",f"{rle_raw_cpu:.6f}",
+            w.writerow([ts,"cpu",f"{rle_sm_cpu:.6f}",f"{rle_raw_cpu:.6f}",f"{rle_norm_cpu:.6f}",
                         f"{e_th_cpu:.6f}", f"{e_pw_cpu:.6f}", f"{'' if c_temp is None else f'{c_temp:.2f}'}","",
                         f"{'' if c_power is None else f'{c_power:.2f}'}", f"{c_util:.2f}", f"{a_load_cpu:.3f}",
-                        f"{t_sus_cpu:.1f}","", f"{cpu_peak_val:.6f}", collapsed_cpu, "|".join(alerts_cpu)])
+                        f"{t_sus_cpu:.1f}","", f"{cpu_peak_val:.6f}", collapsed_cpu, "|".join(alerts_cpu),
+                        f"{'' if c_freq_ghz is None else f'{c_freq_ghz:.3f}'}", f"{'' if cycles_per_joule is None else f'{cycles_per_joule:.6e}'}"])
 
         # Sleep
         time.sleep(tick)
