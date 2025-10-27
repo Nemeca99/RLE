@@ -47,6 +47,10 @@ logs/*.csv
 !lab/sessions/archive/.gitkeep
 !logs/.gitkeep
 
+# Validation reports
+validation_logs/*.md
+validation_logs/*.txt
+
 # OS
 Thumbs.db
 .DS_Store
