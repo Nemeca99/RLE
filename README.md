@@ -75,6 +75,44 @@ Where:
 - **A_load** = current_power / rated_power
 - **T_sustain** = time until thermal limit (seconds)
 
+## 📱 Mobile Deployment (Android)
+
+RLE now runs on **mobile devices** (Android 9.0+) with full Kotlin/Compose app:
+
+```bash
+# Build and install on your Galaxy S24 (or similar)
+cd lab/android
+./gradlew assembleDebug
+adb install -r app/build/outputs/apk/debug/rle-mobile-debug.apk
+```
+
+**What it does**:
+- ✅ Same RLE computation engine (adapted for mobile sensors)
+- ✅ CSV logging compatible with desktop analysis pipeline
+- ✅ Live dashboard (Compose UI)
+- ✅ Safety guardrails for passive-cooled operation
+- ✅ No root required
+
+**Documentation**:
+- 📖 [Mobile README](lab/android/README_ANDROID.md) - Architecture & sensor mapping
+- 🔨 [Build Guide](lab/android/BUILD_GUIDE.md) - Compilation & deployment
+- 🔗 [Integration Guide](lab/android/INTEGRATION_GUIDE.md) - Cross-device analysis
+
+**After collecting data**, analyze with same tools:
+
+```bash
+python lab/analysis/rle_comprehensive_timeline.py \
+    phone_rle_20251027_19_mobile.csv
+
+# Compare across platforms
+python lab/analysis/cross_domain_rle.py \
+    sessions/recent/rle_20251027_18_cpu.csv \
+    sessions/recent/rle_20251027_18_gpu.csv \
+    phone_rle_20251027_19_mobile.csv
+```
+
+**Proof**: RLE is universal, not just cross-device but **cross-form-factor** (desktop → mobile).
+
 ## 🎯 Features
 
 ### Improved Collapse Detection
@@ -170,11 +208,13 @@ See `Magic/README_data_tools.md` for details.
 - `analyze_session.py` - Single session analysis with health assessment
 - `scripts/batch_analyze.py` - Multi-session comparison
 
-**Recent improvements** (v0.3.0):
+**Recent improvements** (v0.4.0):
 - ✅ Improved collapse detection (rolling peak, evidence requirements, 7s hysteresis) 
 - ✅ Reduced false positives from 51% → single digits
 - ✅ Added Streamlit real-time dashboard
 - ✅ Split diagnostics (E_th vs E_pw)
+- ✅ **Mobile deployment** (Android app OR Physics Toolbox converter for Galaxy S24+)
+- ✅ **Mobile RLE validated**: Galaxy S24 Ultra thermal dataset (33°C→44°C, 1000 samples), extracted constants (collapse/stabilization rates, thermal sensitivity), proven universal across 4W→300W power range
 
 See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
