@@ -253,4 +253,5 @@ This breaks backward compatibility - old CSVs won't have these columns.
 - **Getting Started Guide**: Created `GETTING_STARTED.md` - 5-minute walkthrough for new users
 - **Troubleshooting Guide**: Created `lab/docs/TROUBLESHOOTING.md` - comprehensive issue resolution
 - **One-Click Launcher**: Created `RUN_RLE.bat` - dead-simple entrypoint (installs deps, starts monitor + dashboard automatically)
+- **Auto-Report Generation**: Created `lab/monitoring/generate_report.py` - automatically generates session reports on monitor shutdown with health verdict and recommendations
 

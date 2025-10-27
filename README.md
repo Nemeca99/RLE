@@ -31,6 +31,13 @@ It will automatically:
 - ✅ Start the monitor
 - ✅ Open live dashboard in browser
 - ✅ Show where CSVs are being saved
+- ✅ Generate auto-report when you stop monitoring
+
+**When you stop monitoring** (Ctrl+C), you'll automatically get:
+- 📄 Session summary report (`REPORT_rle_YYYYMMDD_HH.txt`)
+- 🩺 Health verdict ("System healthy" / "Needs attention")
+- 📊 Key metrics (temp, power, RLE, collapse rate)
+- 💡 Personalized recommendations
 
 ### 🔧 Manual Start
 
