@@ -250,4 +250,6 @@ This breaks backward compatibility - old CSVs won't have these columns.
 - **RLE Formula Validation**: Independently verified by ChatGPT - formula computation matches logged values with <0.0001 precision across test samples
 - **Agent Identity System**: Created `Kia.yaml` config, `kia_validate.py` with markdown reports and logging, added agent tracking to CHANGELOG
 - **Quick Reference**: Created `QUICK_REFERENCE.md` - command cheat sheet, CSV columns, troubleshooting guide
+- **Getting Started Guide**: Created `GETTING_STARTED.md` - 5-minute walkthrough for new users
+- **Troubleshooting Guide**: Created `lab/docs/TROUBLESHOOTING.md` - comprehensive issue resolution
 

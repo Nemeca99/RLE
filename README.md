@@ -130,7 +130,9 @@ See `Magic/README_data_tools.md` for details.
 ---
 
 **Documentation**:
+- 🚀 [Getting Started](GETTING_STARTED.md) - 5-minute walkthrough
 - ⚡ [Quick Reference](QUICK_REFERENCE.md) - Command cheat sheet & CSV guide
+- 🐛 [Troubleshooting](lab/docs/TROUBLESHOOTING.md) - Common issues & solutions
 - 📖 [What is RLE?](lab/docs/WHAT_IS_RLE.md) - Formula explained with examples
 - 📊 [Interpreting Results](lab/docs/INTERPRETING_RESULTS.md) - Guide to analyzing sessions
 - 🏗️ [Architecture](lab/docs/ARCHITECTURE.md) - System diagrams & state machines

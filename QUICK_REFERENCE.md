@@ -171,12 +171,20 @@ RLE/
 
 ## 📞 Key Files
 
-- `AGENTS.md` - Full agent instructions for AI assistants
-- `lab/README.md` - Lab documentation
-- `lab/USAGE.md` - Usage guide
+### Getting Started
+- `GETTING_STARTED.md` - 5-minute walkthrough
+- `QUICK_REFERENCE.md` - This file (command cheat sheet)
+- `lab/USAGE.md` - Quick start usage
+
+### Documentation
 - `lab/docs/WHAT_IS_RLE.md` - Formula explained
 - `lab/docs/INTERPRETING_RESULTS.md` - Analysis guide
 - `lab/docs/ARCHITECTURE.md` - System diagrams
+- `lab/docs/TROUBLESHOOTING.md` - Common issues & fixes
+
+### Reference
+- `lab/README.md` - Lab documentation
+- `AGENTS.md` - AI assistant instructions
 - `CHANGELOG.md` - Version history
 
 ---
