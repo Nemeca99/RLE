@@ -21216,9 +21216,176 @@ Fixing the original one and deleting the redundant batch files:
 
 Tool use: **search_replace**
 
+
+<details><summary>Edit file: lab/start_monitoring_suite.bat</summary>
+
+**Chunk 1**
+Lines added: 2, lines removed: 2
+
+```diff
+@@ -14,9 +14,9 @@
+  
+  echo [1/2] Starting hardware monitor...
+- start "RLE Monitor" cmd /c "python start_monitor.py --mode gpu --sample-hz 1"
++ start "RLE Monitor" cmd /c "py start_monitor.py --mode gpu --sample-hz 1"
+  timeout /t 3 /nobreak >nul
+  
+  echo [2/2] Starting Streamlit visualization...
+- start "RLE Streamlit" cmd /k "cd monitoring && python -m streamlit run rle_streamlit.py --server.headless=false"
++ start "RLE Streamlit" cmd /k "cd monitoring && py -m streamlit run rle_streamlit.py --server.headless=false"
+  
+  echo.
+```
+
+</details>
+
 ---
 
 
+
+---
+
+Listing redundant batch files to delete:
+
+
+---
+
+Tool use: **glob_file_search**
+
+<details>
+<summary>Searched codebase "*.bat" • **11** results in **1** directory</summary>
+
+Directory: **f:\RLE** (11 files)
+
+| File |
+|------|
+| `lab\start_monitoring_suite.bat` |
+| `lab\START_MONITOR.bat` |
+| `run_monitor.bat` |
+| `start_monitor_simple.bat` |
+| `run_monitor_for_ai.bat` |
+| `run_test_session.bat` |
+| `run_with_lmstudio.bat` |
+| `run_full_suite.bat` |
+| `START_HERE.bat` |
+| `RUN_RLE.bat` |
+| `Magic\run_magic_gpu_overnight.bat` |
+
+</details>
+
+---
+
+
+
+---
+
+Tool use: **delete_file**
+
+undefined
+
+---
+
+Tool use: **delete_file**
+
+undefined
+
+---
+
+Tool use: **delete_file**
+
+undefined
+
+---
+
+Tool use: **delete_file**
+
+undefined
+
+---
+
+Tool use: **delete_file**
+
+undefined
+
+---
+
+Tool use: **delete_file**
+
+undefined
+
+---
+
+Tool use: **delete_file**
+
+undefined
+
+---
+
+Tool use: **delete_file**
+
+undefined
+
+---
+
+Tool use: **delete_file**
+
+undefined
+
+---
+
+Could not find file
+
+---
+
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+cd .. && git add -A && git commit -m "cleanup: Delete redundant batch files, fix start_monitoring_suite.bat to use py launcher" && git push
+```
+
+```
+ push                                                                                                                                                
+[main 26bf763] cleanup: Delete redundant batch files, fix start_monitoring_suite.bat to use py launcher
+ 10 files changed, 672 insertions(+), 327 deletions(-)
+ delete mode 100644 RUN_RLE.bat
+ delete mode 100644 START_HERE.bat
+ delete mode 100644 run_full_suite.bat
+ delete mode 100644 run_monitor.bat
+ delete mode 100644 run_monitor_for_ai.bat
+ delete mode 100644 run_test_session.bat
+ delete mode 100644 run_with_lmstudio.bat
+ delete mode 100644 start_monitor_simple.bat
+Enumerating objects: 13, done.
+Counting objects: 100% (13/13), done.
+Delta compression using up to 16 threads
+Compressing objects: 100% (7/7), done.
+Writing objects: 100% (7/7), 3.34 KiB | 488.00 KiB/s, done.
+Total 7 (delta 5), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (5/5), completed with 5 local objects.
+To https://github.com/Nemeca99/RLE.git
+   ee9f10a..26bf763  main -> main
+```
+
+---
+
+
+
+---
+
+## Use the original: `lab\start_monitoring_suite.bat`
+
+Double-click `lab\start_monitoring_suite.bat`.
+
+This runs:
+1. Monitor (logging to CSV)
+2. Streamlit dashboard (live graphs)
+
+- Press `Ctrl+C` in the monitor window to stop.
+- A report is generated on shutdown.
 
 ---
 

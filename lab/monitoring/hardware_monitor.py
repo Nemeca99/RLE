@@ -11,10 +11,14 @@ try:
         nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature, nvmlDeviceGetFanSpeed,
         nvmlDeviceGetComputeRunningProcesses,
         nvmlDeviceGetClockInfo, nvmlDeviceGetMemoryInfo,
-        nvmlDeviceGetPerformanceState, nvmlDeviceGetPowerManagementLimitConstraints,
-        nvmlDeviceGetPowerManagementDefaultLimitConstraints,
-        nvmlDeviceGetThrottleReasons
+        nvmlDeviceGetPerformanceState, nvmlDeviceGetThrottleReasons
     )
+    
+    # Try to import power limit functions (may not be available in all pynvml versions)
+    try:
+        from pynvml import nvmlDeviceGetPowerManagementLimitConstraints
+    except ImportError:
+        nvmlDeviceGetPowerManagementLimitConstraints = None
     # Constants for temperature sensors
     # NVML_TEMPERATURE_GPU = 0 (core temp)
     # NVML_TEMPERATURE_MEMORY = 1 (memory junction)
@@ -255,8 +259,9 @@ class GpuNVML:
             pass
         
         try:
-            limits = nvmlDeviceGetPowerManagementLimitConstraints(h)
-            power_limit = limits[0] / 1000.0  # W (min power limit)
+            if nvmlDeviceGetPowerManagementLimitConstraints is not None:
+                limits = nvmlDeviceGetPowerManagementLimitConstraints(h)
+                power_limit = limits[0] / 1000.0  # W (min power limit)
         except Exception:
             pass
         
