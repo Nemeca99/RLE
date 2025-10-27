@@ -233,4 +233,5 @@ This breaks backward compatibility - old CSVs won't have these columns.
 - Updated README with CSV column reference table
 - Created CHANGELOG.md for version tracking
 - Added example baseline session CSV
+- **RLE Formula Validation**: Independently verified by ChatGPT - formula computation matches logged values with <0.0001 precision across test samples
 
