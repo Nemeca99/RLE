@@ -1,0 +1,32 @@
+# RLE Lab - Ignore patterns
+
+# Session data
+sessions/recent/*.csv
+sessions/archive/*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual envs
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Keep structure
+!sessions/recent/.gitkeep
+!sessions/archive/.gitkeep
+

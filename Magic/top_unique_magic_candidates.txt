@@ -1,0 +1,2 @@
+# Top unique, magic-sum, low-delta grids from near_magic_candidates_sample.txt
+# Format: Grid, Avg line delta, Symmetry score, Root triangle deltas, Diagnostics

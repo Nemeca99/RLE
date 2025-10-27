@@ -1,0 +1,2 @@
+grid_id,grid_base36,delta,is_unique,magic_sum,triad_avg,triad_stddev,mean_root_deviation,multi_spread,single_spread,repairable,best_repair_type,repair_delta_improvement,repair_path,multi_repaired_b36,single_repaired_b36,line_balance_score,corner_weight,grid_signature
+qp-100-y1-144-w4-p0-u9-sg-121,qp-100-y1-144-w4-p0-u9-sg-121,8.0,1,,0,41.433868176876324,0.0,28,29,1,multi,2,multi-cell mutation,qp-100-y2-144-w4-oz-u9-sg-121,qp-100-y2-144-w4-p0-u9-sg-121,0.9972971677404365,1161.0,"900,961,1024,1089,1156,1225,1296,1369,1444|3482,3500,3482,3494,3476,3494,3486,3470"
