@@ -1,9 +1,10 @@
-# RLE: Recursive Load Efficiency Lab
+# RLE: Recursive Load Efficiency Monitor
 
 [![Repository](https://img.shields.io/badge/GitHub-Nemeca99%2FRLE-blue)](https://github.com/Nemeca99/RLE)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 
-Hardware monitoring and performance analysis for CPU/GPU systems using the **RLE_real** metric.
+**RLE** measures hardware efficiency by balancing useful output vs stress, waste, instability, and time-to-burnout. Real-time monitoring for GPU/CPU systems.
 
 ## 📁 Structure
 
@@ -79,15 +80,46 @@ Where:
 | `lab/sessions/recent/` | Current gaming session CSVs |
 | `lab/sessions/archive/` | Historical data & screenshots |
 
-## 📈 Example Output
+## 📊 CSV Output Format
 
-From your recent gaming session:
+Each session logs to `sessions/recent/rle_YYYYMMDD_HH.csv`:
+
+| Column | Description | Example |
+|--------|-------------|---------|
+| `timestamp` | ISO UTC timestamp | `2025-10-27T12:34:56.789Z` |
+| `device` | "gpu" or "cpu" | `gpu` |
+| `rle_smoothed` | 5-sample rolling average RLE | `0.723456` |
+| `rle_raw` | Instantaneous RLE | `0.845678` |
+| `E_th` | Thermal efficiency component | `0.580000` |
+| `E_pw` | Power efficiency component | `1.350000` |
+| `temp_c` | Core temperature (°C) | `75.00` |
+| `vram_temp_c` | VRAM/junction temp (°C) | `82.00` |
+| `power_w` | Power draw (W) | `198.50` |
+| `util_pct` | GPU utilization (%) | `99.00` |
+| `a_load` | Normalized load (power/rated) | `0.993` |
+| `t_sustain_s` | Seconds to thermal limit | `310.0` |
+| `fan_pct` | Fan speed (%) | `80` |
+| `rolling_peak` | Adaptive peak reference | `1.001545` |
+| `collapse` | Collapse event flag (0/1) | `1` |
+| `alerts` | Pipe-separated warnings | `GPU_TEMP_LIMIT\|VRAM_TEMP_LIMIT` |
+
+## 📈 Example Session
+
+From a typical gaming session:
 ```
 Session: 26.6 minutes, 1597 samples
-Peak Power: 200W @ 76°C
-Mean RLE: 0.17 (bimodal load)
-Collapse Events: 819 → will be much lower with improved detector
+├─ Power: 15-200W range (median 184W)
+├─ Temperature: 58-76°C (peak 76°C)
+├─ Max RLE: 1.00
+├─ Mean RLE: 0.17 (bimodal: idle vs maxed)
+└─ Collapse Events: ~5% with improved detector (v0.3+)
 ```
+
+**Interpretation**:
+- System healthy (temp < 80°C)
+- Hitting power limit frequently (at 200W rated)
+- Bimodal load normal for gaming (idle menus + maxed gameplay)
+- Low mean RLE from scene switching, not thermal issues
 
 ## 🔧 Magic Squares (Separate Project)
 
@@ -97,10 +129,18 @@ See `Magic/README_data_tools.md` for details.
 
 ---
 
-**Lab Documentation**: 
-- Quick usage: `lab/USAGE.md`
-- Full guide: `lab/README.md`  
-- Agent instructions: `AGENTS.md`
+**Documentation**:
+- 📖 [What is RLE?](lab/docs/WHAT_IS_RLE.md) - Formula explained with examples
+- 📊 [Interpreting Results](lab/docs/INTERPRETING_RESULTS.md) - Guide to analyzing sessions
+- 🚀 [Quick Start](lab/USAGE.md) - How to use the suite
+- 🔧 [Full Guide](lab/README.md) - Complete documentation
+- 🤖 [Agent Instructions](AGENTS.md) - For AI assistants
 
-**Recent improvements**: Improved collapse detection (rolling peak, evidence requirements, 7s hysteresis) reduces false positives from 51% → single digits.
+**Recent improvements** (v0.3.0):
+- ✅ Improved collapse detection (rolling peak, evidence requirements, 7s hysteresis) 
+- ✅ Reduced false positives from 51% → single digits
+- ✅ Added Streamlit real-time dashboard
+- ✅ Split diagnostics (E_th vs E_pw)
+
+See [CHANGELOG.md](CHANGELOG.md) for full version history.
 
