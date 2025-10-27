@@ -1,5 +1,8 @@
 # RLE: Recursive Load Efficiency Lab
 
+[![Repository](https://img.shields.io/badge/GitHub-Nemeca99%2FRLE-blue)](https://github.com/Nemeca99/RLE)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 Hardware monitoring and performance analysis for CPU/GPU systems using the **RLE_real** metric.
 
 ## 📁 Structure
