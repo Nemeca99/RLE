@@ -223,3 +223,14 @@ Result: Reduced false positives from 51% → single digits.
 Added columns: `E_th`, `E_pw`, `rolling_peak`
 This breaks backward compatibility - old CSVs won't have these columns.
 
+### Documentation & Tools (Session: 2025-10-27)
+- Created `lab/docs/` directory with comprehensive guides
+- `WHAT_IS_RLE.md` - Formula explained with worked examples
+- `INTERPRETING_RESULTS.md` - How to analyze session data
+- `ARCHITECTURE.md` - System flow diagrams and state machines
+- Enhanced `analyze_session.py` with health assessment
+- Added `batch_analyze.py` for multi-session comparison
+- Updated README with CSV column reference table
+- Created CHANGELOG.md for version tracking
+- Added example baseline session CSV
+

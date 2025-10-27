@@ -132,9 +132,14 @@ See `Magic/README_data_tools.md` for details.
 **Documentation**:
 - 📖 [What is RLE?](lab/docs/WHAT_IS_RLE.md) - Formula explained with examples
 - 📊 [Interpreting Results](lab/docs/INTERPRETING_RESULTS.md) - Guide to analyzing sessions
+- 🏗️ [Architecture](lab/docs/ARCHITECTURE.md) - System diagrams & state machines
 - 🚀 [Quick Start](lab/USAGE.md) - How to use the suite
 - 🔧 [Full Guide](lab/README.md) - Complete documentation
 - 🤖 [Agent Instructions](AGENTS.md) - For AI assistants
+
+**Analysis Tools**:
+- `analyze_session.py` - Single session analysis with health assessment
+- `scripts/batch_analyze.py` - Multi-session comparison
 
 **Recent improvements** (v0.3.0):
 - ✅ Improved collapse detection (rolling peak, evidence requirements, 7s hysteresis) 

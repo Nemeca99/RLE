@@ -30,8 +30,14 @@ All notable changes to this project will be documented in this file.
 
 - **Rolling peak tracking** in CSV output
 - **Lab organization**: Structured into `monitoring/`, `analysis/`, `stress/`, `sessions/`
-- **Session analysis tool** (`analyze_session.py`)
-- **Documentation**: README.md, USAGE.md, AGENTS.md
+- **Session analysis tool** (`analyze_session.py`) with health assessment
+- **Batch analysis tool** (`scripts/batch_analyze.py`) for multi-session comparison
+- **Comprehensive documentation suite** (`lab/docs/`)
+  - `WHAT_IS_RLE.md` - Formula explained with worked examples
+  - `INTERPRETING_RESULTS.md` - How to analyze session data
+  - `ARCHITECTURE.md` - System flow diagrams and state machines
+- **Example baseline session CSV** for testing analysis without hardware
+- **CSV column reference table** in README
 
 ### Changed
 - CSV schema now includes: `E_th`, `E_pw`, `rolling_peak` columns
