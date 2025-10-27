@@ -38,24 +38,45 @@ python kia_validate.py sessions/recent/rle_20251027_04.csv
 
 **Schema frozen 2025-10-27** - Column order and types guaranteed stable for analysis tools.
 
+### By Data Type
+
+**🆔 Identification**
 | Column | Type | Description | Example |
 |--------|------|-------------|---------|
 | `timestamp` | ISO UTC | When sample was taken | `2025-10-27T04:33:22.489Z` |
 | `device` | string | "gpu" or "cpu" | `gpu` |
-| `rle_smoothed` | float | 5-sample rolling average | `0.723456` |
+
+**📈 Efficiency Metrics**
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
+| `rle_smoothed` | float | 5-sample rolling avg RLE (primary) | `0.723456` |
 | `rle_raw` | float | Instantaneous RLE | `0.845678` |
 | `E_th` | float | Thermal efficiency component | `0.580000` |
 | `E_pw` | float | Power efficiency component | `1.350000` |
+| `rolling_peak` | float | Adaptive peak reference | `1.001545` |
+
+**🌡️ Temperature Metrics**
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
 | `temp_c` | float | Core temperature (°C) | `75.00` |
 | `vram_temp_c` | float | VRAM/junction temp (°C) | `82.00` |
+| `t_sustain_s` | float | Seconds to thermal limit | `310.0` |
+
+**⚡ Power & Performance Metrics**
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
 | `power_w` | float | Power draw (W) | `198.50` |
 | `util_pct` | float | GPU utilization (%) | `99.00` |
 | `a_load` | float | Normalized load (power/rated) | `0.993` |
-| `t_sustain_s` | float | Seconds to thermal limit | `310.0` |
 | `fan_pct` | int | Fan speed (%) | `80` |
-| `rolling_peak` | float | Adaptive peak reference | `1.001545` |
+
+**⚠️ Event & Diagnostic Metrics**
+| Column | Type | Description | Example |
+|--------|------|-------------|---------|
 | `collapse` | int | Collapse event flag (0/1) | `1` |
 | `alerts` | string | Pipe-separated warnings | `GPU_TEMP\|VRAM_TEMP` |
+
+📚 **Full documentation**: See `lab/docs/DATA_COLLECTION.md` for detailed explanations of each metric type.
 
 ---
 
