@@ -200,14 +200,23 @@ Outputs:
 
 ## Extension Points
 
-Safe to extend:
+**Safe to extend:**
 - Add new CSV columns (append only)
 - New analysis tools in `lab/analysis/`
 - Additional plots in Streamlit
 - More stress generators
+- Export new report formats from `kia_validate.py`
 
-Requires careful design:
+**Requires careful design:**
 - Modify collapse detection (affects false positive rate)
 - Add new NVML sensors (may affect performance)
 - Change sampling rate (affects detection latency)
+- Modify RLE formula (breaks backward compatibility)
+
+## Related Documentation
+
+- **Quick Reference**: See `QUICK_REFERENCE.md` for command cheat sheet
+- **Formula Details**: See `lab/docs/WHAT_IS_RLE.md` for worked examples
+- **Analysis Guide**: See `lab/docs/INTERPRETING_RESULTS.md` for data interpretation
+- **Agent Instructions**: See `AGENTS.md` for AI assistant guidelines
 
