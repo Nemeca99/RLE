@@ -9,12 +9,26 @@ try:
     from pynvml import (
         nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetUtilizationRates,
         nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature, nvmlDeviceGetFanSpeed,
-        nvmlDeviceGetComputeRunningProcesses,
-        nvmlDeviceGetClockInfo, nvmlDeviceGetMemoryInfo,
-        nvmlDeviceGetPerformanceState, nvmlDeviceGetThrottleReasons
+        nvmlDeviceGetComputeRunningProcesses
     )
     
-    # Try to import power limit functions (may not be available in all pynvml versions)
+    # Try to import optional functions (may not be available in all pynvml versions)
+    try:
+        from pynvml import nvmlDeviceGetClockInfo, nvmlDeviceGetMemoryInfo
+    except ImportError:
+        nvmlDeviceGetClockInfo = None
+        nvmlDeviceGetMemoryInfo = None
+    
+    try:
+        from pynvml import nvmlDeviceGetPerformanceState
+    except ImportError:
+        nvmlDeviceGetPerformanceState = None
+    
+    try:
+        from pynvml import nvmlDeviceGetThrottleReasons
+    except ImportError:
+        nvmlDeviceGetThrottleReasons = None
+    
     try:
         from pynvml import nvmlDeviceGetPowerManagementLimitConstraints
     except ImportError:
@@ -232,29 +246,34 @@ class GpuNVML:
         power_limit = None
         
         try:
-            gpu_clock = nvmlDeviceGetClockInfo(h, NVML_CLOCK_GRAPHICS)
+            if nvmlDeviceGetClockInfo is not None:
+                gpu_clock = nvmlDeviceGetClockInfo(h, NVML_CLOCK_GRAPHICS)
         except Exception:
             pass
         
         try:
-            mem_clock = nvmlDeviceGetClockInfo(h, NVML_CLOCK_MEM)
+            if nvmlDeviceGetClockInfo is not None:
+                mem_clock = nvmlDeviceGetClockInfo(h, NVML_CLOCK_MEM)
         except Exception:
             pass
         
         try:
-            mem_info = nvmlDeviceGetMemoryInfo(h)
-            mem_used = mem_info.used / (1024*1024)  # MB
-            mem_total = mem_info.total / (1024*1024)  # MB
+            if nvmlDeviceGetMemoryInfo is not None:
+                mem_info = nvmlDeviceGetMemoryInfo(h)
+                mem_used = mem_info.used / (1024*1024)  # MB
+                mem_total = mem_info.total / (1024*1024)  # MB
         except Exception:
             pass
         
         try:
-            perf_state = nvmlDeviceGetPerformanceState(h)
+            if nvmlDeviceGetPerformanceState is not None:
+                perf_state = nvmlDeviceGetPerformanceState(h)
         except Exception:
             pass
         
         try:
-            throttle_reasons = nvmlDeviceGetThrottleReasons(h)
+            if nvmlDeviceGetThrottleReasons is not None:
+                throttle_reasons = nvmlDeviceGetThrottleReasons(h)
         except Exception:
             pass
         
