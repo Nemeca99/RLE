@@ -4,15 +4,19 @@ import psutil
 
 # NVML (GPU)
 try:
-    # Try pynvml (13.x, works with nvidia-ml-py backend)
+    # Import pynvml (works with nvidia-ml-py backend)
     import pynvml
-    NVML_OK = True
-    # Import all the functions we need
     from pynvml import (
         nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetUtilizationRates,
         nvmlDeviceGetPowerUsage, nvmlDeviceGetTemperature, nvmlDeviceGetFanSpeed,
-        nvmlDeviceGetComputeRunningProcesses, NVML_TEMPERATURE_GPU, NVML_TEMPERATURE_MEMORY
+        nvmlDeviceGetComputeRunningProcesses
     )
+    # Constants for temperature sensors
+    # NVML_TEMPERATURE_GPU = 0 (core temp)
+    # NVML_TEMPERATURE_MEMORY = 1 (memory junction)
+    NVML_TEMPERATURE_GPU = 0
+    NVML_TEMPERATURE_MEMORY = 1
+    NVML_OK = True
 except Exception as e:
     NVML_OK = False
     print(f"NVML import failed: {e}")
