@@ -69,6 +69,13 @@ python kia_validate.py sessions/recent/rle_20251027_04.csv
 | `util_pct` | float | GPU utilization (%) | `99.00` |
 | `a_load` | float | Normalized load (power/rated) | `0.993` |
 | `fan_pct` | int | Fan speed (%) | `80` |
+| `gpu_clock_mhz` | int | GPU core clock (MHz) | `1905` |
+| `mem_clock_mhz` | int | Memory clock (MHz) | `7001` |
+| `mem_used_mb` | int | VRAM used (MB) | `6144` |
+| `mem_total_mb` | int | Total VRAM (MB) | `8192` |
+| `perf_state` | int | Performance state (P0-P31) | `0` |
+| `throttle_reasons` | hex | Throttle reason bitmask | `0x04000000` |
+| `power_limit_w` | float | Power limit (W) | `200.0` |
 
 **⚠️ Event & Diagnostic Metrics**
 | Column | Type | Description | Example |

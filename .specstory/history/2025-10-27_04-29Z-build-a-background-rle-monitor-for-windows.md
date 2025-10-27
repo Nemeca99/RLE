@@ -18528,31 +18528,68 @@ No results found
 
 ---
 
+Inspecting the existing stress tests:
 
 
 ---
 
 Tool use: **read_file**
 
----
-
-
+Read file: lab/stress/max_stress_test.py
 
 ---
 
+
+
+---
+
+Existing stress tests are CPU-focused. To get real GPU data:
+
+- Open LM Studio and load a model; keep generating text.
+- Monitor data in `lab/sessions/recent/rle_20251027_08.csv`.
+
+Monitor is running. When you’re done, press Ctrl+C to generate `REPORT_rle_20251027_08.txt`.
 
 
 ---
 
 Tool use: **run_terminal_cmd**
 
+```bash
+Write-Host "To load your GPU and get real data:"; Write-Host ""; Write-Host "1. Keep the monitor running (start_monitor_simple.bat)"; Write-Host "2. Open LM Studio and load a 7B-13B model"; Write-Host "3. Generate text continuously"; Write-Host "4. Your RLE will capture the GPU usage"; Write-Host ""; Write-Host "Alternative: Just use your normal work/background tasks"
+```
+
+```
+Write-Host ""; Write-Host "Alternative: Just use your normal work/background tasks"                                                                  
+To load your GPU and get real data:
+
+1. Keep the monitor running (start_monitor_simple.bat)
+2. Open LM Studio and load a 7B-13B model
+3. Generate text continuously
+4. Your RLE will capture the GPU usage
+```
+
 ---
 
 
 
 ---
 
+Monitor is running and capturing data to `rle_20251027_08.csv` (564+ samples).
 
+To generate GPU load:
+- Use LM Studio
+- Play games
+- Run any GPU workload
+
+The monitor records everything to the CSV file.
+
+When done:
+1. Press Ctrl+C in the monitor terminal
+2. It generates `REPORT_rle_20251027_08.txt` automatically
+3. Review the health verdict
+
+System is ready.
 
 ---
 
@@ -18569,14 +18606,682 @@ _**Assistant (default)**_
 ---
 
 
+Creating a data dictionary that categorizes each metric by type:
+
 
 ---
 
 Tool use: **write**
 
+
+<details><summary>Edit file: lab/docs/DATA_COLLECTION.md</summary>
+
+**Chunk 1**
+Lines added: 222, lines removed: 1
+
+```diff
+@@ -1,1 +1,222 @@
+- 
++ # RLE Data Collection - What We're Recording
++ 
++ ## Overview
++ 
++ RLE monitoring captures GPU/CPU telemetry at 1 Hz (1 sample per second). Each row is one second of hardware state.
++ 
++ ## Data Categories
++ 
++ ### 1️⃣ IDENTIFICATION & TIMESTAMPS
++ 
++ | Column | Type | Range | Purpose |
++ |--------|------|-------|---------|
++ | `timestamp` | ISO string | `2025-10-27T08:00:43.752965Z` | When sample was taken (UTC) |
++ | `device` | string | `"gpu"` or `"cpu"` | Which device measured |
++ 
++ **What it tells you:** Chronological order and device separation.
++ 
++ ---
++ 
++ ### 2️⃣ EFFICIENCY METRICS (RLE)
++ 
++ | Column | Type | Range | Purpose |
++ |--------|------|-------|---------|
++ | `rle_smoothed` | float | 0.0 - 2.0+ | 5-sample rolling avg RLE (primary metric) |
++ | `rle_raw` | float | 0.0 - 5.0+ | Instantaneous RLE (noisy) |
++ | `E_th` | float | 0.0 - 1.0 | Thermal efficiency component |
++ | `E_pw` | float | 0.0 - 5.0+ | Power efficiency component |
++ | `rolling_peak` | float | 0.0 - 2.0+ | Adaptive peak reference (for collapse detection) |
++ 
++ **What it tells you:**
++ - **High RLE (>0.8)**: System running efficiently
++ - **Medium RLE (0.3-0.8)**: Normal operation
++ - **Low RLE (<0.3)**: System stressed
++ - **E_th vs E_pw split**: Which is the bottleneck?
++ 
++ **Formula**: `RLE = (util × stability) / (a_load × (1 + 1/T_sustain))`
++ 
++ ---
++ 
++ ### 3️⃣ TEMPERATURE METRICS
++ 
++ | Column | Type | Range | Purpose |
++ |--------|------|-------|---------|
++ | `temp_c` | float | 30°C - 90°C | Core temperature (°C) |
++ | `vram_temp_c` | float | 30°C - 100°C | VRAM/memory junction temp (°C) |
++ | `t_sustain_s` | float | 1s - 600s | Seconds until thermal limit reached |
++ 
++ **What it tells you:**
++ - **<70°C**: Excellent cooling
++ - **70-80°C**: Good (normal gaming load)
++ - **80-85°C**: Hot (approaching limits)
++ - **>85°C**: Dangerous (thermal throttling)
++ 
++ **t_sustain interpretation:**
++ - **>300s**: Plenty of thermal headroom
++ - **60-300s**: Getting warm
++ - **<60s**: Very close to thermal throttling
++ 
++ ---
++ 
++ ### 4️⃣ POWER & PERFORMANCE METRICS
++ 
++ | Column | Type | Range | Purpose |
++ |--------|------|-------|---------|
++ | `power_w` | float | 0W - 220W | Power draw (Watts) |
++ | `util_pct` | float | 0% - 100% | GPU/CPU utilization percentage |
++ | `a_load` | float | 0.0 - 1.2 | Normalized load = power / rated power |
++ | `fan_pct` | int | 0% - 100% | Fan speed percentage |
++ 
++ **What it tells you:**
++ - **util_pct**: How much of the GPU is working (0% idle, 100% maxed)
++ - **power_w**: Absolute power consumption
++ - **a_load**: Relative to GPU's power limit
++   - **<0.8**: Not hitting power limits
++   - **0.8-0.95**: Occasional power throttling
++   - **>0.95**: Constantly power-limited
++   - **>1.0**: Exceeding rated power (dangerous)
++ 
++ **fan_pct**: How hard cooling is working
++ 
++ ---
++ 
++ ### 5️⃣ COLLAPSE DETECTION METRICS
++ 
++ | Column | Type | Range | Purpose |
++ |--------|------|-------|---------|
++ | `collapse` | int | 0 or 1 | Collapse event flag |
++ | `rolling_peak` | float | varies | Adaptive peak for collapse detection |
++ | `alerts` | string | pipe-separated | Safety warnings |
++ 
++ **What it tells you:**
++ 
++ **`collapse = 1`** means:
++ - RLE dropped below 65% of recent peak
++ - For 7+ consecutive seconds
++ - With thermal OR power evidence
++ - System is losing efficiency
++ 
++ **`rolling_peak`**: The "normal" RLE the system established. Used to detect when efficiency drops.
++ 
++ **`alerts`** (example: `GPU_TEMP_LIMIT|VRAM_TEMP_LIMIT`):
++ - `GPU_TEMP_LIMIT`: Core temp ≥ 83°C for 5s
++ - `VRAM_TEMP_LIMIT`: VRAM temp ≥ 90°C for 5s
++ - `GPU_A_LOAD>1.10`: Exceeded rated power by 10%
++ 
++ **Collapse rate healthy ranges:**
++ - **0-5%**: Excellent (system efficient)
++ - **5-15%**: Moderate (some thermal stress)
++ - **>15%**: High (frequent efficiency loss, check cooling/power)
++ 
++ ---
++ 
++ ### 6️⃣ DIAGNOSTIC SPLIT (E_th vs E_pw)
++ 
++ | Component | Meaning | Low Value Causes |
++ |-----------|---------|------------------|
++ | **E_th** (Thermal) | How efficiently system manages thermal headroom | • Approaching temp limits<br>• Poor cooling<br>• Thermal throttling |
++ | **E_pw** (Power) | How efficiently power is converted to work | • Power limiting<br>• a_load > 0.95<br>• Not enough load |
++ 
++ **Examples:**
++ 
++ **Scenario A**: E_th low, E_pw high
++ → Thermal bottleneck (cooling is the issue)
++ 
++ **Scenario B**: E_pw low, E_th high
++ → Power bottleneck (hitting power limits)
++ 
++ **Scenario C**: Both low
++ → Severely overstressed (both thermal and power limits)
++ 
++ ---
++ 
++ ## Data Collection Frequency
++ 
++ - **Sampling rate**: 1 Hz (1 sample per second)
++ - **CSV files**: Rotate hourly (new file each hour)
++ - **Duration**: Runs until you stop it (Ctrl+C)
++ - **File location**: `lab/sessions/recent/rle_YYYYMMDD_HH.csv`
++ 
++ ---
++ 
++ ## Understanding the CSV
++ 
++ Each row = 1 second snapshot of your GPU state
++ 
++ **Example row**:
++ ```csv
++ 2025-10-27T08:15:23.456789Z,gpu,0.723456,0.845678,0.580000,1.350000,75.00,82.00,198.50,99.00,0.993,310.0,80,1.001545,1,GPU_TEMP_LIMIT
++ ```
++ 
++ Breaking it down:
++ - `timestamp`: When (08:15:23)
++ - `device`: GPU
++ - `rle_smoothed`: 0.72 (good efficiency)
++ - `temp_c`: 75°C (good)
++ - `power_w`: 198W (near limit)
++ - `util_pct`: 99% (maxed out)
++ - `a_load`: 0.993 (hitting power limit)
++ - `collapse`: 1 (efficiency dropped)
++ - `alerts`: GPU_TEMP_LIMIT (temp warning)
++ 
++ ---
++ 
++ ## Session Analysis
++ 
++ After capturing data, run:
++ ```bash
++ python lab/analyze_session.py sessions/recent/rle_20251027_08.csv
++ ```
++ 
++ This shows:
++ - Max/mean temp, power, RLE
++ - Collapse count and rate
++ - Health assessment
++ - Recommendations
++ 
++ ---
++ 
++ ## Key Relationships
++ 
++ ### RLE Components
++ ```
++ RLE = E_th × (util / a_load)
++      └─┬─┘   └────┬──────┘
++     Thermal    Power
++      ratio      ratio
++ ```
++ 
++ ### When RLE Drops
++ RLE drops when EITHER:
++ 1. **E_th drops** (thermal issues)
++ 2. **util/a_load ratio drops** (power limiting or instability)
++ 
++ ### Collapse Detection Triggers
++ All must be true:
++ - ✅ RLE < 65% of rolling peak
++ - ✅ For 7+ consecutive seconds
++ - ✅ Evidence: `t_sustain < 60s` OR `temp > (limit-5°C)` OR `a_load > 0.95`
++ - ✅ Under load: `util > 60%` OR `a_load > 0.75`
++ - ✅ Heating: temp rising >0.05°C/s
++ 
++ ---
++ 
++ ## Data Quality Indicators
++ 
++ **Good data**:
++ - Smooth temperature curves
++ - Collapse events rare (<5%)
++ - RLE correlates with utilization
++ - E_th and E_pw make sense (high during good conditions, low during stress)
++ 
++ **Bad data**:
++ - Constant collapse events (>50%) = detector too sensitive
++ - Never any collapses = detector too strict
++ - a_load > 1.1 = exceeds rated power (hardware issue)
++ - Temperature readings jump wildly = sensor issue
++ 
++ ---
++ 
++ **Last Updated**: 2025-10-27  
++ **Agent**: Kia
++ 
+```
+
+</details>
+
 ---
 
 
+
+---
+
+
+
+---
+
+Updating QUICK_REFERENCE with the organized data categories:
+
+
+---
+
+Tool use: **read_file**
+
+Read file: QUICK_REFERENCE.md
+
+---
+
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: QUICK_REFERENCE.md</summary>
+
+**Chunk 1**
+Lines added: 24, lines removed: 3
+
+```diff
+@@ -39,22 +39,43 @@
+  **Schema frozen 2025-10-27** - Column order and types guaranteed stable for analysis tools.
+  
++ ### By Data Type
++ 
++ **🆔 Identification**
+  | Column | Type | Description | Example |
+  |--------|------|-------------|---------|
+  | `timestamp` | ISO UTC | When sample was taken | `2025-10-27T04:33:22.489Z` |
+  | `device` | string | "gpu" or "cpu" | `gpu` |
+- | `rle_smoothed` | float | 5-sample rolling average | `0.723456` |
++ 
++ **📈 Efficiency Metrics**
++ | Column | Type | Description | Example |
++ |--------|------|-------------|---------|
++ | `rle_smoothed` | float | 5-sample rolling avg RLE (primary) | `0.723456` |
+  | `rle_raw` | float | Instantaneous RLE | `0.845678` |
+  | `E_th` | float | Thermal efficiency component | `0.580000` |
+  | `E_pw` | float | Power efficiency component | `1.350000` |
++ | `rolling_peak` | float | Adaptive peak reference | `1.001545` |
++ 
++ **🌡️ Temperature Metrics**
++ | Column | Type | Description | Example |
++ |--------|------|-------------|---------|
+  | `temp_c` | float | Core temperature (°C) | `75.00` |
+  | `vram_temp_c` | float | VRAM/junction temp (°C) | `82.00` |
++ | `t_sustain_s` | float | Seconds to thermal limit | `310.0` |
++ 
++ **⚡ Power & Performance Metrics**
++ | Column | Type | Description | Example |
++ |--------|------|-------------|---------|
+  | `power_w` | float | Power draw (W) | `198.50` |
+  | `util_pct` | float | GPU utilization (%) | `99.00` |
+  | `a_load` | float | Normalized load (power/rated) | `0.993` |
+- | `t_sustain_s` | float | Seconds to thermal limit | `310.0` |
+  | `fan_pct` | int | Fan speed (%) | `80` |
+- | `rolling_peak` | float | Adaptive peak reference | `1.001545` |
++ 
++ **⚠️ Event & Diagnostic Metrics**
++ | Column | Type | Description | Example |
++ |--------|------|-------------|---------|
+  | `collapse` | int | Collapse event flag (0/1) | `1` |
+  | `alerts` | string | Pipe-separated warnings | `GPU_TEMP\|VRAM_TEMP` |
++ 
++ 📚 **Full documentation**: See `lab/docs/DATA_COLLECTION.md` for detailed explanations of each metric type.
+  
+  ---
+```
+
+</details>
+
+---
+
+
+
+---
+
+Committing the data-collection documentation updates:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git add -A && git commit -m "docs: Add comprehensive data collection documentation with type categorization" && git push
+```
+
+```
+PS F:\RLE> git add -A && git commit -m "docs: Add comprehensive data collection documentation with type categorization" && git push
+[main 0014329] docs: Add comprehensive data collection documentation with type categorization
+ 3 files changed, 933 insertions(+), 3 deletions(-)
+ create mode 100644 lab/docs/DATA_COLLECTION.md
+Enumerating objects: 16, done.
+Counting objects: 100% (16/16), done.
+Delta compression using up to 16 threads
+Compressing objects: 100% (9/9), done.
+Writing objects: 100% (9/9), 8.62 KiB | 1.08 MiB/s, done.
+Total 9 (delta 6), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (6/6), completed with 6 local objects.
+To https://github.com/Nemeca99/RLE.git
+   4d354b6..0014329  main -> main
+```
+
+---
+
+
+
+---
+
+Updating AGENTS.md:
+
+
+---
+
+Tool use: **read_file**
+
+Read file: AGENTS.md
+
+---
+
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: AGENTS.md</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -255,4 +255,5 @@
+  - **One-Click Launcher**: Created `RUN_RLE.bat` - dead-simple entrypoint (installs deps, starts monitor + dashboard automatically)
+  - **Auto-Report Generation**: Created `lab/monitoring/generate_report.py` - automatically generates session reports on monitor shutdown with health verdict and recommendations
++ - **Data Collection Documentation**: Created `lab/docs/DATA_COLLECTION.md` - comprehensive guide categorizing all metrics by type (Efficiency, Temperature, Power, Diagnostics, Events) with interpretation guidelines
+  
+  
+```
+
+</details>
+
+---
+
+
+
+---
+
+Updating README.md:
+
+
+---
+
+Tool use: **read_file**
+
+Read file: README.md
+
+---
+
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: README.md</summary>
+
+**Chunk 1**
+Lines added: 10, lines removed: 1
+
+```diff
+@@ -97,5 +97,14 @@
+  ## 📊 CSV Output Format
+  
+- Each session logs to `sessions/recent/rle_YYYYMMDD_HH.csv`:
++ Each session logs to `sessions/recent/rle_YYYYMMDD_HH.csv` with **15 columns** organized by type:
++ - **Identification**: `timestamp`, `device`
++ - **Efficiency Metrics**: `rle_smoothed`, `rle_raw`, `E_th`, `E_pw`, `rolling_peak`
++ - **Temperature Metrics**: `temp_c`, `vram_temp_c`, `t_sustain_s`
++ - **Power/Performance**: `power_w`, `util_pct`, `a_load`, `fan_pct`
++ - **Events/Diagnostics**: `collapse`, `alerts`
++ 
++ 📚 **See `lab/docs/DATA_COLLECTION.md`** for complete data dictionary and interpretation guide.
++ 
++ Sample row:
+  
+  | Column | Description | Example |
+```
+
+</details>
+
+---
+
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git add -A && git commit -m "docs: Update AGENTS.md and README.md with new data collection documentation" && git push
+```
+
+```
+PS F:\RLE> git add -A && git commit -m "docs: Update AGENTS.md and README.md with new data collection documentation" && git push   
+[main 022de9c] docs: Update AGENTS.md and README.md with new data collection documentation
+ 2 files changed, 11 insertions(+), 1 deletion(-)
+Enumerating objects: 7, done.
+Counting objects: 100% (7/7), done.
+Delta compression using up to 16 threads
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (4/4), 902 bytes | 902.00 KiB/s, done.
+Total 4 (delta 3), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (3/3), completed with 3 local objects.
+To https://github.com/Nemeca99/RLE.git
+   0014329..022de9c  main -> main
+```
+
+---
+
+
+
+---
+
+Data collection is now organized by type.
+
+## Data organized by type
+
+### 1️⃣ Identification
+- `timestamp` - When the sample was taken (UTC)
+- `device` - GPU or CPU
+
+### 2️⃣ Efficiency metrics
+- `rle_smoothed` - Primary efficiency score
+- `rle_raw` - Instantaneous (noisy)
+- `E_th` - Thermal efficiency (bottleneck?)
+- `E_pw` - Power efficiency (bottleneck?)
+- `rolling_peak` - Adaptive reference for collapse detection
+
+### 3️⃣ Temperature metrics
+- `temp_c` - Core temperature
+- `vram_temp_c` - VRAM temperature
+- `t_sustain_s` - Seconds until thermal limit
+
+### 4️⃣ Power and performance metrics
+- `power_w` - Absolute power draw
+- `util_pct` - GPU utilization %
+- `a_load` - Relative load (0.0-1.2)
+- `fan_pct` - Fan speed %
+
+### 5️⃣ Events and diagnostics
+- `collapse` - Efficiency drop flag
+- `alerts` - Warnings (pipe-separated)
+
+## Documentation
+
+- `lab/docs/DATA_COLLECTION.md` — data dictionary
+- `QUICK_REFERENCE.md` — tables organized by type
+- `README.md` — data organization overview
+
+What this enables:
+- Clear temperature vs efficiency tracking
+- Power bottlenecks identified separately from thermal ones
+- Interpret values (what is good vs dangerous)
+- Map metrics to hardware behavior
+
+Monitor is running; data collection is well organized.
+
+---
+
+_**User (2025-10-27 02:28Z)**_
+
+should we use this?
+
+@https://github.com/rdobson/python-hwinfo.git 
+
+---
+
+_**Assistant (default)**_
+
+
+
+---
+
+
+Avoid using python-hwinfo here.
+
+Reasons:
+- Linux-only: requires `lspci`, `dmidecode`; you’re on Windows
+- Static hardware info: enumerates hardware at boot, not real-time telemetry
+- Already covered: `psutil` and `nvidia-ml-py` handle cross-platform monitoring
+
+What we already collect:
+- GPU utilization, power, temp (core/VRAM), fan %, clocks (NVML)
+- CPU utilization, package temp/power, memory (psutil)
+- GPU-active processes (which apps are running)
+
+Most RLE needs are met by the current stack. Checking for any gaps:
+
+
+---
+
+Tool use: **codebase_search**
+
+<details>
+                <summary>Searched codebase "What hardware metrics are we currently collecting in hardware_monitor.py?" • **13** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `lab/monitoring/hardware_monitor.py` | L75 |
+| `lab/monitoring/hardware_monitor.py` | L208-409 |
+| `lab/monitoring/hardware_monitor.py` | L220-409 |
+| `lab/monitoring/README_monitor.md` | L70 |
+| `lab/monitoring/hardware_monitor.py` | L220-430 |
+| `lab/monitoring/hardware_monitor.py` | L107-206 |
+| `lab/monitoring/hardware_monitor.py` | L225-434 |
+| `lab/monitoring/hardware_monitor.py` | L201-409 |
+| `lab/monitoring/hardware_monitor.py` | L79-169 |
+| `lab/monitoring/hardware_monitor.py` | L84-169 |
+| `lab/monitoring/hardware_monitor.py` | L414-434 |
+| `lab/monitoring/hardware_monitor.py` | L102-196 |
+| `lab/monitoring/rle_streamlit.py` | L29-96 |
+
+</details>
+
+---
+
+
+
+---
+
+## Already covered
+
+**Real-time telemetry:**
+- GPU: utilization, power, temp (core/VRAM), fans, clocks, active processes
+- CPU: utilization, package temp/power (via HWiNFO CSV)
+
+**Your stack:**
+- ✅ `psutil` — CPU/memory system-wide metrics (cross-platform)
+- ✅ `nvidia-ml-py` — GPU NVML library (Windows/Linux)
+- ✅ HWiNFO CSV fallback — extra sensors if needed
+
+---
+
+## What python-hwinfo would add
+- Static hardware detection (enumerate hardware at boot)
+- PCI device listing
+- BIOS/system info
+
+Not needed for continuous telemetry.
+
+---
+
+## If you want additional metrics
+Checking which metrics can be added from NVML:
+
+
+---
+
+Tool use: **codebase_search**
+
+<details>
+                <summary>Searched codebase "What NVML metrics are available that we're not currently using for GPU monitoring?" • **12** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `lab/monitoring/hardware_monitor.py` | L107-206 |
+| `lab/monitoring/hardware_monitor.py` | L75 |
+| `lab/monitoring/hardware_monitor.py` | L208-409 |
+| `lab/monitoring/hardware_monitor.py` | L220-409 |
+| `lab/monitoring/README_monitor.md` | L70 |
+| `lab/monitoring/hardware_monitor.py` | L220-430 |
+| `lab/monitoring/README_monitor.md` | L66-83 |
+| `lab/monitoring/hardware_monitor.py` | L225-434 |
+| `lab/monitoring/hardware_monitor.py` | L201-409 |
+| `lab/monitoring/generate_report.py` | L6-190 |
+| `lab/monitoring/hardware_monitor.py` | L79-169 |
+| `lab/monitoring/rle_streamlit.py` | L29-96 |
+
+</details>
+
+---
+
+
+
+---
+
+## Summary: don’t use python-hwinfo
+
+### Why not
+1. Linux-only; you’re on Windows
+2. Static hardware info; your focus is real-time telemetry
+3. You already have the tools: `psutil` + `nvidia-ml-py` cover what’s needed
+
+### What RLE captures
+- GPU: util, power, temp (core/VRAM), fans, active processes
+- CPU: util, package power, temp (via HWiNFO)
+- RLE metrics: smoothed score, thermal/power efficiency split
+- Collapse detection: sustained efficiency drops
+- Safety alerts: temperature/power warnings
+
+---
+
+## Additional metrics available from NVML
+- Clock speeds (GPU/MEM)
+- GPU memory used/free
+- Performance state
+- Power limits (min/max/default)
+- Throttle reasons (thermal/power/voltage)
+
+Your current metrics are sufficient for RLE analysis. Should I add any of the above? Your system is set to collect the data for analysis.
+
+---
+
+_**User**_
+
+yes add it all
 
 ---
 

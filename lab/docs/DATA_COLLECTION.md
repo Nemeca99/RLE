@@ -66,6 +66,13 @@ RLE monitoring captures GPU/CPU telemetry at 1 Hz (1 sample per second). Each ro
 | `util_pct` | float | 0% - 100% | GPU/CPU utilization percentage |
 | `a_load` | float | 0.0 - 1.2 | Normalized load = power / rated power |
 | `fan_pct` | int | 0% - 100% | Fan speed percentage |
+| `gpu_clock_mhz` | int | 0 - 2000 | GPU core clock speed (MHz) |
+| `mem_clock_mhz` | int | 0 - 10000 | Memory clock speed (MHz) |
+| `mem_used_mb` | int | 0 - 8192 | VRAM used (MB) |
+| `mem_total_mb` | int | varies | Total VRAM (MB) |
+| `perf_state` | int | 0 - 31 | Performance state (P0-P31) |
+| `throttle_reasons` | hex | varies | Bitmask of throttle reasons |
+| `power_limit_w` | float | varies | GPU power limit (Watts) |
 
 **What it tells you:**
 - **util_pct**: How much of the GPU is working (0% idle, 100% maxed)
@@ -77,6 +84,22 @@ RLE monitoring captures GPU/CPU telemetry at 1 Hz (1 sample per second). Each ro
   - **>1.0**: Exceeding rated power (dangerous)
 
 **fan_pct**: How hard cooling is working
+
+**gpu_clock_mhz**: Core clock speed. Lower when throttled or idle
+
+**mem_clock_mhz**: Memory clock speed. Usually fixed or decreases when power-limited
+
+**mem_used_mb / mem_total_mb**: VRAM usage. High usage can impact performance
+
+**perf_state**: GPU performance state (P0 = max, P8 = idle)
+
+**throttle_reasons**: Hex bitmask showing why GPU throttled:
+- `0x02000000` = Thermal slowdown (software)
+- `0x04000000` = Thermal slowdown (hardware)
+- `0x08000000` = Power brake slowdown
+- Multiple bits set = multiple causes
+
+**power_limit_w**: GPU's power limit (usually close to rated power)
 
 ---
 
