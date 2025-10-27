@@ -13,11 +13,11 @@ if not exist "monitoring\hardware_monitor.py" (
 )
 
 echo [1/2] Starting hardware monitor...
-start "RLE Monitor" cmd /c "python start_monitor.py --mode gpu --sample-hz 1"
+start "RLE Monitor" cmd /c "py start_monitor.py --mode gpu --sample-hz 1"
 timeout /t 3 /nobreak >nul
 
 echo [2/2] Starting Streamlit visualization...
-start "RLE Streamlit" cmd /k "cd monitoring && python -m streamlit run rle_streamlit.py --server.headless=false"
+start "RLE Streamlit" cmd /k "cd monitoring && py -m streamlit run rle_streamlit.py --server.headless=false"
 
 echo.
 echo ========================================
