@@ -96,7 +96,16 @@ Where:
 
 ## 📊 CSV Output Format
 
-Each session logs to `sessions/recent/rle_YYYYMMDD_HH.csv`:
+Each session logs to `sessions/recent/rle_YYYYMMDD_HH.csv` with **15 columns** organized by type:
+- **Identification**: `timestamp`, `device`
+- **Efficiency Metrics**: `rle_smoothed`, `rle_raw`, `E_th`, `E_pw`, `rolling_peak`
+- **Temperature Metrics**: `temp_c`, `vram_temp_c`, `t_sustain_s`
+- **Power/Performance**: `power_w`, `util_pct`, `a_load`, `fan_pct`
+- **Events/Diagnostics**: `collapse`, `alerts`
+
+📚 **See `lab/docs/DATA_COLLECTION.md`** for complete data dictionary and interpretation guide.
+
+Sample row:
 
 | Column | Description | Example |
 |--------|-------------|---------|
