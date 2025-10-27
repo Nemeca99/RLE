@@ -40,20 +40,27 @@ If you see an error, check [Troubleshooting Guide](lab/docs/TROUBLESHOOTING.md).
 
 ## Step 3: Start Monitoring
 
-### Option A: Full Suite (Recommended)
+### ⚡ One-Click Launch (Easiest)
 
-Double-click or run:
+**Just double-click `RUN_RLE.bat`** in the repo root!
+
+This automatically:
+- ✅ Checks Python installation
+- ✅ Installs dependencies
+- ✅ Starts the monitor
+- ✅ Opens Streamlit dashboard in browser
+- ✅ Shows where CSVs are being saved
+
+**That's it!** No command line needed.
+
+### 🔧 Manual Start (Alternative)
+
 ```bash
-lab\start_monitoring_suite.bat
-```
+# Full suite
+cd lab
+start_monitoring_suite.bat
 
-This opens:
-- Terminal window (running monitor)
-- Browser window (Streamlit dashboard)
-
-### Option B: Monitor Only
-
-```bash
+# Or monitor only
 cd lab
 python start_monitor.py --mode gpu --sample-hz 1
 ```

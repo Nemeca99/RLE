@@ -10393,9 +10393,317 @@ Recommendation: the quick reference and a short session walkthrough. Creating a 
 
 Tool use: **write**
 
+
+<details><summary>Edit file: QUICK_REFERENCE.md</summary>
+
+**Chunk 1**
+Lines added: 186, lines removed: 1
+
+```diff
+@@ -1,1 +1,186 @@
+- 
++ # RLE Monitoring Lab - Quick Reference
++ 
++ ## 🚀 Quick Commands
++ 
++ ### Start Monitoring
++ ```bash
++ # Full suite (monitor + dashboard)
++ start_monitoring_suite.bat
++ 
++ # Just the monitor
++ python start_monitor.py --mode gpu
++ 
++ # With custom settings
++ python start_monitor.py --mode gpu --sample-hz 2 --gpu-temp-limit 80
++ ```
++ 
++ ### Analyze Session
++ ```bash
++ # Analyze latest session
++ python analyze_session.py
++ 
++ # Analyze specific session
++ python analyze_session.py sessions/recent/rle_20251027_04.csv
++ 
++ # Batch analysis
++ python scripts/batch_analyze.py sessions/recent/
++ ```
++ 
++ ### Validate System
++ ```bash
++ # Validate RLE formula
++ python kia_validate.py sessions/recent/rle_20251027_04.csv
++ ```
++ 
++ ---
++ 
++ ## 📊 CSV Columns Reference
++ 
++ | Column | Type | Description | Example |
++ |--------|------|-------------|---------|
++ | `timestamp` | ISO UTC | When sample was taken | `2025-10-27T04:33:22.489Z` |
++ | `device` | string | "gpu" or "cpu" | `gpu` |
++ | `rle_smoothed` | float | 5-sample rolling average | `0.723456` |
++ | `rle_raw` | float | Instantaneous RLE | `0.845678` |
++ | `E_th` | float | Thermal efficiency component | `0.580000` |
++ | `E_pw` | float | Power efficiency component | `1.350000` |
++ | `temp_c` | float | Core temperature (°C) | `75.00` |
++ | `vram_temp_c` | float | VRAM/junction temp (°C) | `82.00` |
++ | `power_w` | float | Power draw (W) | `198.50` |
++ | `util_pct` | float | GPU utilization (%) | `99.00` |
++ | `a_load` | float | Normalized load (power/rated) | `0.993` |
++ | `t_sustain_s` | float | Seconds to thermal limit | `310.0` |
++ | `fan_pct` | int | Fan speed (%) | `80` |
++ | `rolling_peak` | float | Adaptive peak reference | `1.001545` |
++ | `collapse` | int | Collapse event flag (0/1) | `1` |
++ | `alerts` | string | Pipe-separated warnings | `GPU_TEMP\|VRAM_TEMP` |
++ 
++ ---
++ 
++ ## 🧮 RLE Formula
++ 
++ ```python
++ stability = 1 / (1 + stddev(util_last_5_samples))
++ T_sustain = (temp_limit - T_current) / max(dT/dt, ε)
++ denominator = a_load × (1 + 1/T_sustain)
++ RLE = (util × stability) / denominator
++ 
++ # Split components
++ E_th = stability / (1 + 1/T_sustain)  # Thermal efficiency
++ E_pw = util / a_load                   # Power efficiency
++ ```
++ 
++ ---
++ 
++ ## ⚠️ Collapse Detection Logic
++ 
++ Triggered when ALL conditions met:
++ 1. **Time**: At least 60s warmup elapsed
++ 2. **Gate**: `util > 60%` OR `a_load > 0.75` AND `temp rising > 0.05°C/s`
++ 3. **Drop**: `rle_smoothed < 0.65 × rolling_peak`
++ 4. **Duration**: Sustained for 7+ consecutive seconds
++ 5. **Evidence**: `t_sustain < 60s` OR `temp > (limit-5°C)` OR `a_load > 0.95`
++ 
++ ---
++ 
++ ## 📈 Interpreting RLE Values
++ 
++ | RLE Range | Interpretation | Action |
++ |-----------|----------------|--------|
++ | > 0.8 | Excellent efficiency | System running optimally |
++ | 0.5 - 0.8 | Good efficiency | Normal operation |
++ | 0.2 - 0.5 | Moderate efficiency | Check for thermal/power limits |
++ | < 0.2 | Poor efficiency | System may be overstressed |
++ 
++ ---
++ 
++ ## 🔍 Common Issues
++ 
++ ### High Collapse Rate (>50%)
++ - **Cause**: Old detector (pre-v0.3) or truly overstressed system
++ - **Fix**: Check if using old CSV. New detector reduces false positives to <5%
++ 
++ ### No Collapses
++ - **Cause**: System not under heavy load OR detector too strict
++ - **Fix**: Review temp/power logs. Collapse should be rare (<5%)
++ 
++ ### Missing Columns (E_th, E_pw)
++ - **Cause**: CSV from old monitor (pre-v0.3)
++ - **Fix**: Re-record session with updated `hardware_monitor.py`
++ 
++ ### High False Positive Rate
++ - **Cause**: Using simple 70% threshold (old detector)
++ - **Fix**: Use v0.3.0+ with rolling peak, evidence, hysteresis
++ 
++ ---
++ 
++ ## 🛠️ Troubleshooting
++ 
++ ### Monitor not starting
++ ```bash
++ # Check NVML
++ python -c "import pynvml; pynvml.nvmlInit()"
++ 
++ # Check dependencies
++ pip install -r requirements_lab.txt
++ ```
++ 
++ ### Streamlit dashboard not showing
++ - Check CSV path in `rle_streamlit.py`
++ - Verify monitor is writing to `sessions/recent/`
++ - Check browser console for errors
++ 
++ ### CSV missing data
++ - Ensure monitor ran for >60 seconds
++ - Check for permission errors in `sessions/recent/`
++ - Verify NVML/psutil permissions
++ 
++ ---
++ 
++ ## 📁 Directory Structure
++ 
++ ```
++ RLE/
++ ├── lab/
++ │   ├── monitoring/        # Background daemons
++ │   │   ├── hardware_monitor.py  # Main daemon
++ │   │   └── rle_streamlit.py     # Dashboard
++ │   ├── analysis/          # Post-session tools
++ │   ├── stress/            # Load generators
++ │   ├── sessions/
++ │   │   ├── recent/        # Current CSVs
++ │   │   └── archive/        # Old data
++ │   └── docs/              # Documentation
++ ├── Kia.yaml              # Agent config
++ ├── kia_validate.py        # Validation script
++ └── QUICK_REFERENCE.md    # This file
++ ```
++ 
++ ---
++ 
++ ## 🎯 Typical Workflow
++ 
++ 1. **Start monitoring** → `start_monitoring_suite.bat`
++ 2. **Play game / run workload** → Monitor generates CSV
++ 3. **Analyze session** → `python analyze_session.py`
++ 4. **Validate** → `python kia_validate.py`
++ 5. **Check health** → Review collapse rate and temps
++ 6. **Archive if needed** → Move CSV to `sessions/archive/`
++ 
++ ---
++ 
++ ## 📞 Key Files
++ 
++ - `AGENTS.md` - Full agent instructions for AI assistants
++ - `lab/README.md` - Lab documentation
++ - `lab/USAGE.md` - Usage guide
++ - `lab/docs/WHAT_IS_RLE.md` - Formula explained
++ - `lab/docs/INTERPRETING_RESULTS.md` - Analysis guide
++ - `lab/docs/ARCHITECTURE.md` - System diagrams
++ - `CHANGELOG.md` - Version history
++ 
++ ---
++ 
++ **Last Updated**: Session 2025-10-27  
++ **Agent**: Kia v1.0
++ 
+```
+
+</details>
+
 ---
 
 
+
+---
+
+Reviewing the architecture doc for cross-references and consistency:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: lab/docs/ARCHITECTURE.md</summary>
+
+**Chunk 1**
+Lines added: 11, lines removed: 2
+
+```diff
+@@ -201,14 +201,23 @@
+  ## Extension Points
+  
+- Safe to extend:
++ **Safe to extend:**
+  - Add new CSV columns (append only)
+  - New analysis tools in `lab/analysis/`
+  - Additional plots in Streamlit
+  - More stress generators
++ - Export new report formats from `kia_validate.py`
+  
+- Requires careful design:
++ **Requires careful design:**
+  - Modify collapse detection (affects false positive rate)
+  - Add new NVML sensors (may affect performance)
+  - Change sampling rate (affects detection latency)
++ - Modify RLE formula (breaks backward compatibility)
++ 
++ ## Related Documentation
++ 
++ - **Quick Reference**: See `QUICK_REFERENCE.md` for command cheat sheet
++ - **Formula Details**: See `lab/docs/WHAT_IS_RLE.md` for worked examples
++ - **Analysis Guide**: See `lab/docs/INTERPRETING_RESULTS.md` for data interpretation
++ - **Agent Instructions**: See `AGENTS.md` for AI assistant guidelines
+  
+  
+```
+
+</details>
+
+---
+
+
+
+---
+
+Committing changes:
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git add QUICK_REFERENCE.md lab/docs/ARCHITECTURE.md && git commit -m "docs: Add QUICK_REFERENCE.md and enhance ARCHITECTURE cross-references" && git push
+```
+
+```
+es" && git push                                                                                                                                      
+[main b0de6d8] docs: Add QUICK_REFERENCE.md and enhance ARCHITECTURE cross-references
+ 2 files changed, 197 insertions(+), 2 deletions(-)
+ create mode 100644 QUICK_REFERENCE.md
+Enumerating objects: 10, done.
+Counting objects: 100% (10/10), done.
+Delta compression using up to 16 threads
+Compressing objects: 100% (6/6), done.
+Writing objects: 100% (6/6), 3.22 KiB | 3.22 MiB/s, done.
+Total 6 (delta 4), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (4/4), completed with 4 local objects.
+To https://github.com/Nemeca99/RLE.git
+   d481393..b0de6d8  main -> main
+```
+
+---
+
+
+
+---
+
+Updating documentation:
+
+
+---
+
+Tool use: **search_replace**
+
+
+<details><summary>Edit file: README.md</summary>
+
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -131,4 +131,5 @@
+  
+  **Documentation**:
++ - ⚡ [Quick Reference](QUICK_REFERENCE.md) - Command cheat sheet & CSV guide
+  - 📖 [What is RLE?](lab/docs/WHAT_IS_RLE.md) - Formula explained with examples
+  - 📊 [Interpreting Results](lab/docs/INTERPRETING_RESULTS.md) - Guide to analyzing sessions
+```
+
+</details>
 
 ---
 
@@ -10405,9 +10713,22 @@ Tool use: **write**
 
 Tool use: **search_replace**
 
----
 
+<details><summary>Edit file: AGENTS.md</summary>
 
+**Chunk 1**
+Lines added: 1, lines removed: undefined
+
+```diff
+@@ -250,4 +250,5 @@
+  - **RLE Formula Validation**: Independently verified by ChatGPT - formula computation matches logged values with <0.0001 precision across test samples
+  - **Agent Identity System**: Created `Kia.yaml` config, `kia_validate.py` with markdown reports and logging, added agent tracking to CHANGELOG
++ - **Quick Reference**: Created `QUICK_REFERENCE.md` - command cheat sheet, CSV columns, troubleshooting guide
+  
+  
+```
+
+</details>
 
 ---
 
@@ -10417,29 +10738,24 @@ Tool use: **search_replace**
 
 Tool use: **run_terminal_cmd**
 
----
+```bash
+git add AGENTS.md README.md && git commit -m "docs: Update references for QUICK_REFERENCE.md" && git push
+```
 
-
-
----
-
-
-
----
-
-Tool use: **search_replace**
-
----
-
-
-
----
-
-
-
----
-
-
+```
+PS F:\RLE> git add AGENTS.md README.md && git commit -m "docs: Update references for QUICK_REFERENCE.md" && git push                                 
+[main 342bc76] docs: Update references for QUICK_REFERENCE.md
+ 2 files changed, 2 insertions(+)
+Enumerating objects: 7, done.
+Counting objects: 100% (7/7), done.
+Delta compression using up to 16 threads
+Compressing objects: 100% (4/4), done.
+Writing objects: 100% (4/4), 575 bytes | 575.00 KiB/s, done.
+Total 4 (delta 3), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (3/3), completed with 3 local objects.
+To https://github.com/Nemeca99/RLE.git
+   b0de6d8..342bc76  main -> main
+```
 
 ---
 
@@ -10447,11 +10763,39 @@ Tool use: **search_replace**
 
 ---
 
+---
 
+## While you were away
+
+Created and organized:
+
+### New file: `QUICK_REFERENCE.md`
+- CSV column reference table
+- Common commands cheat sheet
+- RLE formula quick reference
+- Collapse detection logic summary
+- Troubleshooting guide
+- Typical workflow steps
+
+### Enhanced `ARCHITECTURE.md`
+- Added cross-references to related docs
+- Noted extension points for validation
+- Updated safe vs careful-change guidance
+
+### Updated documentation
+- Added quick reference link to README
+- Tracked changes in AGENTS.md
+- Prepared everything
 
 ---
 
+Summary:
+- Project is documented
+- Onboarding is straightforward
+- References are cross-linked
+- Documentation is current
 
+Relaxed workflow and structure in place for future sessions.
 
 ---
 
@@ -10468,6 +10812,325 @@ _**Assistant (default)**_
 ---
 
 
+Adding a troubleshooting guide and a Getting Started walkthrough:
+
+
+---
+
+Tool use: **write**
+
+
+<details><summary>Edit file: lab/docs/TROUBLESHOOTING.md</summary>
+
+**Chunk 1**
+Lines added: 291, lines removed: 1
+
+```diff
+@@ -1,1 +1,291 @@
+- 
++ # Troubleshooting RLE Monitoring
++ 
++ ## Common Issues and Solutions
++ 
++ ### Monitor Won't Start
++ 
++ **Symptoms**: `hardware_monitor.py` fails to initialize
++ 
++ **Solutions**:
++ ```bash
++ # 1. Check NVML installation
++ python -c "import pynvml; pynvml.nvmlInit()"
++ 
++ # 2. Verify GPU is accessible
++ nvidia-smi
++ 
++ # 3. Reinstall dependencies
++ pip install -r requirements_lab.txt --force-reinstall
++ 
++ # 4. Check Python version (needs 3.10+)
++ python --version
++ ```
++ 
++ ### High False Positive Collapse Rate (>50%)
++ 
++ **Symptoms**: Session analysis shows 50-80% collapse rate
++ 
++ **Cause**: Using old session data (pre-v0.3.0) with simple 70% threshold detector
++ 
++ **Solutions**:
++ - Re-record session with updated monitor
++ - Ignore collapse flags in old CSVs
++ - Check `AGENTS.md` "Recent Changes" to identify detector version
++ 
++ ### Streamlit Dashboard Not Updating
++ 
++ **Symptoms**: Dashboard shows old data or "No data available"
++ 
++ **Solutions**:
++ ```python
++ # 1. Check CSV path in rle_streamlit.py (line ~30)
++ # Should point to: lab/sessions/recent/
++ 
++ # 2. Verify monitor is writing CSVs
++ ls lab/sessions/recent/rle_*.csv
++ 
++ # 3. Check file permissions
++ # Monitor needs write access to sessions/recent/
++ 
++ # 4. Verify monitor is running
++ # Check terminal for heartbeat messages
++ ```
++ 
++ ### Missing Columns in CSV
++ 
++ **Symptoms**: Analysis fails with "KeyError: 'E_th'" or similar
++ 
++ **Cause**: CSV from old monitor version (pre-v0.3.0)
++ 
++ **Columns Added in v0.3.0**:
++ - `E_th` - Thermal efficiency component
++ - `E_pw` - Power efficiency component  
++ - `rolling_peak` - Adaptive peak reference
++ 
++ **Solutions**:
++ - Re-record session with `hardware_monitor.py` v0.3.0+
++ - Or use legacy analysis script that doesn't require these columns
++ - Check `CHANGELOG.md` for version dates
++ 
++ ### System Appears "Overstressed" But Temps Are Fine
++ 
++ **Symptoms**: High collapse rate but max temp < 80°C
++ 
++ **Possible Causes**:
++ 1. Power limit throttling (check `a_load > 0.95`)
++ 2. Old detector (see "High False Positive" above)
++ 3. Thermal throttling from VRAM (check `vram_temp_c`)
++ 
++ **Solutions**:
++ ```python
++ # Check power limiting
++ df = pd.read_csv('session.csv')
++ print(df[df['a_load'] > 0.95].shape[0], "samples power-limited")
++ 
++ # Check VRAM temps
++ if 'vram_temp_c' in df.columns:
++     print("VRAM temp max:", df['vram_temp_c'].max())
++ ```
++ 
++ ### "Permission Denied" Writing CSV
++ 
++ **Symptoms**: Monitor crashes trying to write to `sessions/recent/`
++ 
++ **Solutions**:
++ ```bash
++ # 1. Check directory exists
++ if not exist "lab\sessions\recent" mkdir lab\sessions\recent
++ 
++ # 2. Check write permissions (Windows)
++ icacls lab\sessions\recent
++ 
++ # 3. Run monitor as administrator if needed
++ # (Not recommended, fix permissions instead)
++ ```
++ 
++ ### Analysis Script Shows Wrong Session
++ 
++ **Symptoms**: `analyze_session.py` analyzes old/wrong CSV
++ 
++ **Solutions**:
++ ```bash
++ # Explicitly specify file
++ python analyze_session.py sessions/recent/rle_20251027_04.csv
++ 
++ # Check what's in recent directory
++ ls lab/sessions/recent/
++ 
++ # Old sessions should be in archive/
++ mv lab/sessions/recent/rle_OLD.csv lab/sessions/archive/
++ ```
++ 
++ ### Validation Script Errors
++ 
++ **Symptoms**: `kia_validate.py` fails with encoding errors or crashes
++ 
++ **Solutions**:
++ ```bash
++ # 1. Ensure Python 3.10+ (emojis need UTF-8)
++ python --version
++ 
++ # 2. Set UTF-8 encoding in terminal (Windows)
++ chcp 65001
++ 
++ # 3. Run without emojis (modify script temporarily)
++ # Search-replace "✅" with "[OK]" etc.
++ 
++ # 4. Check CSV exists
++ python kia_validate.py FULL_PATH_TO_CSV
++ ```
++ 
++ ### CPU Monitoring Not Working
++ 
++ **Symptoms**: Only GPU data appears (no CPU rows)
++ 
++ **Solutions**:
++ - Check HWiNFO CSV output is enabled (if using HWiNFO)
++ - Verify psutil can read CPU metrics: `python -c "import psutil; print(psutil.cpu_percent())"`
++ - Check monitor mode: `--mode cpu` vs `--mode both`
++ - CPU package temp requires motherboard sensor support (may be N/A)
++ 
++ ### Streamlit Port Already in Use
++ 
++ **Symptoms**: "Address already in use" error when starting dashboard
++ 
++ **Solutions**:
++ ```bash
++ # 1. Find and kill existing streamlit
++ taskkill /F /IM streamlit.exe
++ 
++ # 2. Use different port
++ streamlit run lab/monitoring/rle_streamlit.py --server.port 8502
++ 
++ # 3. Or modify start_monitoring_suite.bat
++ # Add: --server.port 8502
++ ```
++ 
++ ### CSV Files Growing Too Large
++ 
++ **Symptoms**: Individual CSV files > 50MB
++ 
++ **Solutions**:
++ - CSVs rotate hourly automatically (1Hz = ~3600 rows/hour)
++ - Archive old sessions regularly
++ - Compress archived CSVs: `gzip lab/sessions/archive/*.csv` (Linux)
++ - Or use 7-zip: `7z a archive.7z *.csv`
++ 
++ ---
++ 
++ ## Performance Issues
++ 
++ ### Monitor Using Too Much CPU (>1%)
++ 
++ **Solutions**:
++ ```python
++ # Reduce sampling rate
++ python start_monitor.py --mode gpu --sample-hz 0.5
++ 
++ # Check for heavy operations in loop
++ # Monitor should be lightweight (<100 LOC per tick)
++ ```
++ 
++ ### Analysis Takes Too Long
++ 
++ **Symptoms**: `analyze_session.py` takes >10 seconds for 1000-row session
++ 
++ **Solutions**:
++ ```python
++ # Use sample data for testing
++ df = pd.read_csv('session.csv', nrows=100)
++ 
++ # Profile the analysis
++ python -m cProfile -o profile.stats analyze_session.py
++ 
++ # Check for unnecessary loops or operations
++ ```
++ 
++ ---
++ 
++ ## Hardware-Specific Issues
++ 
++ ### NVIDIA GPU Not Detected
++ 
++ **Symptoms**: `RuntimeError: NVML not available`
++ 
++ **Solutions**:
++ ```bash
++ # 1. Check driver is installed
++ nvidia-smi
++ 
++ # 2. Install nvidia-ml-py3
++ pip install nvidia-ml-py3
++ 
++ # 3. Verify GPU is enabled (not disabled in BIOS)
++ # Check Device Manager -> Display Adapters
++ 
++ # 4. Try fallback
++ pip install pynvml  # Older but stable
++ ```
++ 
++ ### VRAM Temperature Not Available
++ 
++ **Symptoms**: `vram_temp_c` column is empty
++ 
++ **Cause**: Older GPUs (<2018) don't expose memory junction temp
++ 
++ **Solutions**:
++ - This is normal for older hardware
++ - Use `temp_c` (core temp) instead
++ - Upgrade GPU for VRAM monitoring (optional)
++ 
++ ### HWiNFO CSV Tailing Fails
++ 
++ **Symptoms**: CPU power/temp always shows 0
++ 
++ **Solutions**:
++ ```python
++ # 1. Check HWiNFO is logging to CSV
++ # Settings -> Logging -> CSV Export enabled
++ 
++ # 2. Verify file path in hardware_monitor.py
++ # Update hwinfo_path = "path/to/hwinfo.csv"
++ 
++ # 3. Check CSV format matches expected columns
++ # Should have: CPU Package Power, CPU Package, etc.
++ 
++ # 4. CPU package sensors need motherboard support
++ # May not be available on all systems
++ ```
++ 
++ ---
++ 
++ ## Diagnostic Commands
++ 
++ ```bash
++ # Check system health
++ python kia_validate.py sessions/recent/LATEST.csv
++ 
++ # Batch analyze all sessions
++ python scripts/batch_analyze.py sessions/recent/
++ 
++ # Quick session check
++ python -c "import pandas as pd; df=pd.read_csv('session.csv'); print(df.describe())"
++ 
++ # Find problematic sessions
++ python -c "import pandas as pd; import glob; [print(f.fname, df['collapse'].sum()/len(df)*100) for f in glob.glob('sessions/recent/*.csv')]"
++ ```
++ 
++ ---
++ 
++ ## Getting Help
++ 
++ 1. **Check `QUICK_REFERENCE.md`** for command cheat sheet
++ 2. **Review `AGENTS.md`** for system constraints
++ 3. **See `CHANGELOG.md`** for version history
++ 4. **Examine `validation_logs/`** for detailed diagnostics
++ 
++ ---
++ 
++ **Last Updated**: Session 2025-10-27  
++ **Agent**: Kia v1.0
++ 
+```
+
+</details>
+
+---
+
+
+
+---
+
+Creating a Getting Started guide:
+
 
 ---
 
@@ -10483,7 +11146,39 @@ Tool use: **write**
 
 ---
 
-Tool use: **write**
+Tool use: **search_replace**
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+---
+
+
 
 ---
 

@@ -252,4 +252,5 @@ This breaks backward compatibility - old CSVs won't have these columns.
 - **Quick Reference**: Created `QUICK_REFERENCE.md` - command cheat sheet, CSV columns, troubleshooting guide
 - **Getting Started Guide**: Created `GETTING_STARTED.md` - 5-minute walkthrough for new users
 - **Troubleshooting Guide**: Created `lab/docs/TROUBLESHOOTING.md` - comprehensive issue resolution
+- **One-Click Launcher**: Created `RUN_RLE.bat` - dead-simple entrypoint (installs deps, starts monitor + dashboard automatically)
 

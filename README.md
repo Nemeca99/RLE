@@ -21,31 +21,38 @@ RLE/
 
 ## 🚀 Quick Start
 
+### ⚡ One-Click Launch (Easiest)
+
+**Just double-click `RUN_RLE.bat`** in the repo root!
+
+It will automatically:
+- ✅ Check Python installation
+- ✅ Install dependencies
+- ✅ Start the monitor
+- ✅ Open live dashboard in browser
+- ✅ Show where CSVs are being saved
+
+### 🔧 Manual Start
+
 ```bash
-# 1. Install dependencies
-pip install psutil nvidia-ml-py3 pandas streamlit plotly
-# Or: pip install -r lab/requirements_lab.txt
-
-# 2. Start monitoring (choose one):
-
-# Option A: Monitoring only (background logging)
-cd lab
-python start_monitor.py --mode gpu --sample-hz 1
-
-# Option B: Full suite (monitor + live graphs)
+# Option A: Full suite (monitor + live graphs)
 cd lab
 start_monitoring_suite.bat
 
-# 3. Game/use your PC normally...
-# Ctrl+C when done
-
-# 4. Analyze session
-python analyze_session.py sessions/recent/rle_YYYYMMDD_HH.csv
+# Option B: Monitoring only
+cd lab
+python start_monitor.py --mode gpu --sample-hz 1
 ```
 
-**Full Suite** opens two windows:
-- Terminal: Background logging to CSV
-- Browser: Streamlit real-time dashboard with live graphs
+### 📊 Analyze Session
+
+```bash
+# Quick analysis
+python lab/analyze_session.py
+
+# Validate system
+python kia_validate.py
+```
 
 ## 📊 RLE_real Formula
 
