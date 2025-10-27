@@ -1,0 +1,85 @@
+
+========================================================================
+RLE Session Report - AUTO-GENERATED
+========================================================================
+
+Session File: rle_20251027_09.csv
+Date: 2025-10-27 04:18:04
+
+========================================================================
+SESSION DURATION
+========================================================================
+Duration: 13.6 minutes
+Samples: 1626 (120.0 samples/minute)
+
+========================================================================
+TEMPERATURE ANALYSIS
+========================================================================
+Max Temperature: 63.0°C
+Mean Temperature: 49.5°C
+Min Temperature: 41.0°C
+
+Verdict: ✅ EXCELLENT - Well below thermal limits
+
+========================================================================
+POWER CONSUMPTION
+========================================================================
+Max Power: 56.21W
+Mean Power: 20.71W
+Median Power: 20.78W
+
+Power Limit Utilization: 0.281
+✅ Power limit healthy
+
+========================================================================
+RLE EFFICIENCY
+========================================================================
+Max RLE: 489.184692
+Mean RLE: 13.116852
+Median RLE: 2.692653
+
+RLE Efficiency Verdict: ✅ EXCELLENT - System running efficiently
+
+========================================================================
+COLLAPSE ANALYSIS
+========================================================================
+Total Collapse Events: 0
+Collapse Rate: 0.0%
+
+Collapse Verdict: ✅ EXCELLENT - System healthy (0.0%)
+
+========================================================================
+GPU UTILIZATION
+========================================================================
+Max Utilization: 65.0%
+Mean Utilization: 14.6%
+Median Utilization: 9.5%
+
+========================================================================
+THERMAL SUSTAINABILITY
+========================================================================
+Mean t_sustain: 573.1s
+Min t_sustain: 11.3s
+Samples <60s (close to limit): 77
+
+========================================================================
+OVERALL HEALTH VERDICT
+========================================================================
+⚠️ SYSTEM NEEDS ATTENTION
+
+Issues detected:
+  - Near thermal throttling
+
+Recommendations:
+  - Improve cooling (better airflow, fan curve, undervolt)
+
+========================================================================
+NEXT STEPS
+========================================================================
+1. Review the detailed analysis: python lab/analyze_session.py F:\RLE\lab\sessions\recent\rle_20251027_09.csv
+2. Validate system: python kia_validate.py F:\RLE\lab\sessions\recent\rle_20251027_09.csv
+3. Check other sessions: python lab/scripts/batch_analyze.py lab/sessions/recent/
+
+========================================================================
+Report generated: 2025-10-27 04:18:04
+========================================================================
