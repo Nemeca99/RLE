@@ -94,9 +94,12 @@ adb install -r app/build/outputs/apk/debug/rle-mobile-debug.apk
 - ✅ No root required
 
 **Documentation**:
-- 📖 [Mobile README](lab/android/README_ANDROID.md) - Architecture & sensor mapping
-- 🔨 [Build Guide](lab/android/BUILD_GUIDE.md) - Compilation & deployment
-- 🔗 [Integration Guide](lab/android/INTEGRATION_GUIDE.md) - Cross-device analysis
+- 📖 [Getting Started](lab/docs/GETTING_STARTED.md) - 5-minute walkthrough
+- ⚡ [Quick Reference](lab/docs/QUICK_REFERENCE.md) - Command cheat sheet & CSV guide
+- 🐛 [Troubleshooting](lab/docs/TROUBLESHOOTING.md) - Common issues & solutions
+- 📖 [What is RLE?](lab/docs/WHAT_IS_RLE.md) - Formula explained with examples
+- 🏗️ [Architecture](lab/docs/ARCHITECTURE.md) - System diagrams & state machines
+- 📚 [Docs Index](lab/docs/INDEX.md) - All docs in one place
 
 **After collecting data**, analyze with same tools:
 
@@ -165,7 +168,7 @@ Sample row:
 | `fan_pct` | Fan speed (%) | `80` |
 | `rolling_peak` | Adaptive peak reference | `1.001545` |
 | `collapse` | Collapse event flag (0/1) | `1` |
-| `alerts` | Pipe-separated warnings | `GPU_TEMP_LIMIT\|VRAM_TEMP_LIMIT` |
+| `alerts` | Pipe-separated warnings | `GPU_TEMP_LIMIT|VRAM_TEMP_LIMIT` |
 
 ## 📈 Example Session
 
@@ -194,15 +197,13 @@ See `Magic/README_data_tools.md` for details.
 ---
 
 **Documentation**:
-- 🚀 [Getting Started](GETTING_STARTED.md) - 5-minute walkthrough
-- ⚡ [Quick Reference](QUICK_REFERENCE.md) - Command cheat sheet & CSV guide
+- 🚀 [Getting Started](lab/docs/GETTING_STARTED.md) - 5-minute walkthrough
+- ⚡ [Quick Reference](lab/docs/QUICK_REFERENCE.md) - Command cheat sheet & CSV guide
 - 🐛 [Troubleshooting](lab/docs/TROUBLESHOOTING.md) - Common issues & solutions
 - 📖 [What is RLE?](lab/docs/WHAT_IS_RLE.md) - Formula explained with examples
 - 📊 [Interpreting Results](lab/docs/INTERPRETING_RESULTS.md) - Guide to analyzing sessions
 - 🏗️ [Architecture](lab/docs/ARCHITECTURE.md) - System diagrams & state machines
-- 🚀 [Quick Start](lab/USAGE.md) - How to use the suite
-- 🔧 [Full Guide](lab/README.md) - Complete documentation
-- 🤖 [Agent Instructions](AGENTS.md) - For AI assistants
+- 📚 [Docs Index](lab/docs/INDEX.md) - All docs in one place
 
 **Analysis Tools**:
 - `analyze_session.py` - Single session analysis with health assessment
@@ -216,5 +217,5 @@ See `Magic/README_data_tools.md` for details.
 - ✅ **Mobile deployment** (Android app OR Physics Toolbox converter for Galaxy S24+)
 - ✅ **Mobile RLE validated**: Galaxy S24 Ultra thermal dataset (33°C→44°C, 1000 samples), extracted constants (collapse/stabilization rates, thermal sensitivity), proven universal across 4W→300W power range
 
-See [CHANGELOG.md](CHANGELOG.md) for full version history.
+See [lab/docs/CHANGELOG.md](lab/docs/CHANGELOG.md) for full version history.
 
