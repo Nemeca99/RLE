@@ -7,30 +7,32 @@ RLE (Recursive Load Efficiency) is a dimensionless, predictive, topology-invaria
 - Predictive lead time: ~0.7–1.0 s before firmware throttling
 - Mobile constants (S24 Ultra): collapse -0.0043 RLE/s, stabilization 0.0048 RLE/s, thermal sensitivity -0.2467 RLE/°C
 
-See: [What is RLE](WHAT_IS_RLE.md) • [RLE Physics](RLE_PHYSICS.md) • [Mobile Validation](MOBILE_RLE_VALIDATION.md)
-
 ---
 
-## 2. What is RLE (Detailed Overview)
+## 2. What is RLE (Definition, Formula, Components)
 RLE measures efficiency as a balance of productive work versus stress, waste, instability, and time-to-burnout. It is unitless, so values can be compared across devices and form factors.
 
 Formula:
 ```
 RLE = (util × stability) / (A_load × (1 + 1/T_sustain))
+  where
+    util ∈ [0,1]      # utilization
+    stability = 1 / (1 + stddev(util_last_k))
+    A_load = power_actual / power_rated
+    T_sustain = (temp_limit - temp_c) / max(dT/dt, ε)
 ```
-Components:
-- util: utilization fraction (0–1)
-- stability: 1 / (1 + stddev(util_recent)) — smooth loads are efficient
-- A_load: actual_power / rated_power — how hard you’re pushing
-- T_sustain: seconds to thermal limit at current dT/dt
-
 Split diagnostics:
 - E_th = stability / (1 + 1/T_sustain)  (thermal efficiency)
 - E_pw = util / A_load                   (power efficiency)
 
-Why it’s dimensionless: every factor is a ratio of like units or a pure number; units cancel.
+Why dimensionless:
+- util, stability, A_load, (1 + 1/T_sustain) are all ratios or pure numbers → units cancel.
 
-See: [WHAT_IS_RLE.md](WHAT_IS_RLE.md) • [RLE_PHYSICS.md](RLE_PHYSICS.md)
+Interpretation bands:
+- RLE > 0.8: Excellent
+- 0.5–0.8: Good
+- 0.2–0.5: Moderate (check power/thermal limits)
+- < 0.2: Poor (overstressed)
 
 ---
 
@@ -43,8 +45,6 @@ The RLE Lab is a lightweight monitoring and analysis suite that:
 - Generates per-hour plots and session reports
 
 Typical flow: Start monitor → Play/Run workload → CSV logs → Analyze/Report.
-
-See: [GETTING_STARTED.md](GETTING_STARTED.md) • [USAGE.md](USAGE.md)
 
 ---
 
@@ -67,72 +67,80 @@ lab/
 │  └─ archive/   # Historical data & plots
 └─ docs/         # Documentation (this folder)
 ```
-Role of each area:
-- monitoring/: measurement + real-time visualization
-- analysis/: insight generation, plots, reports
-- stress/: generate controlled load for testing
-- sessions/: data lake of CSVs, split by recency
-- docs/: user/developer documentation
-
-See: [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ---
 
-## 5. Component Purposes & End-to-End Data Flow
-High-level pipeline:
+## 5. Architecture (Flow & Collapse Detection)
+End-to-end pipeline:
 1) Collect → 2) Compute → 3) Detect → 4) Log → 5) Visualize/Analyze → 6) Report
 
-- Collect: NVML (GPU), psutil (CPU), optional HWiNFO CSV for CPU power/temp
-- Compute: util, stability, A_load, T_sustain → RLE, E_th, E_pw
-- Detect: rolling_peak with decay; gates (util>60% or A_load>0.75); temp rising; 65% drop; 7s hysteresis; evidence (t_sustain<60s or temp>limit-5°C or A_load>0.95)
-- Log: CSV rows at ~1 Hz (frozen schema v0.3.0)
-- Visualize: Streamlit dashboard (live); matplotlib/PDF (post)
-- Report: automatic summary on stop; on-demand PDF per-hour plots
+Collection:
+- GPU: NVML (util_pct, power_w, temp_c, fan_pct, clocks, perf state, throttle reasons)
+- CPU: psutil (util), optional HWiNFO CSV (CPU power/temp)
 
-See: [ARCHITECTURE.md](ARCHITECTURE.md) • [DATA_COLLECTION.md](DATA_COLLECTION.md) • [INTERPRETING_RESULTS.md](INTERPRETING_RESULTS.md)
+Computation:
+- util, stability (rolling util variance), A_load, T_sustain → RLE, E_th, E_pw
 
----
+Collapse detection (improved v0.3):
+- Rolling peak with decay (≈0.998 per tick)
+- Gate: util > 60% OR A_load > 0.75 AND temp rising > 0.05°C/s
+- Drop: RLE_smoothed < 0.65 × rolling_peak (threshold)
+- Hysteresis: sustained for ≥7 consecutive seconds
+- Evidence required: T_sustain < 60s OR temp > (limit-5°C) OR A_load > 0.95
+- Output: collapse ∈ {0,1}; alerts pipe-list for warnings
 
-## 6. Script & Equation Index (Deep Dives)
-- Monitoring
-  - `monitoring/hardware_monitor.py`: sampling, RLE compute, collapse detector
-  - `monitoring/rle_streamlit.py`: live dashboard UI
-  - `monitoring/generate_report.py`: end-of-session report
-- Analysis
-  - `analysis/analyze_session.py`: per-session stats/health
-  - `analysis/rle_comprehensive_timeline.py`: multi-session overlays, knee points
-  - `analysis/report_sessions.py`: per-hour multi-page PDF
-  - `analysis/summarize_sessions.py`: batch CSV summary table
-- Mobile (validation artifacts in lab/pc; docs here in docs/)
-  - See: [MOBILE_RLE_VALIDATION.md](MOBILE_RLE_VALIDATION.md)
-- Equations & Rationale
-  - RLE definition and dimensional analysis: [RLE_PHYSICS.md](RLE_PHYSICS.md)
-  - Component interpretations and thresholds: [WHAT_IS_RLE.md](WHAT_IS_RLE.md), [INTERPRETING_RESULTS.md](INTERPRETING_RESULTS.md)
-  - Topology invariance: [TOPOLOGY_INVARIANCE.md](TOPOLOGY_INVARIANCE.md)
-  - Publication package: [PUBLICATION.md](PUBLICATION.md)
+Why this works:
+- Prevents scene-change noise (requires sustained, evidenced drop)
+- Adapts to capability via rolling peak decay
 
 ---
 
-## 7. Data Schema (CSV)
-Schema v0.3.0 (frozen). Key groups:
+## 6. Data Schema (CSV Columns & Meaning)
+Schema v0.3.0 (frozen)
+
+Core columns:
 - Identification: `timestamp`, `device`
 - Efficiency: `rle_smoothed`, `rle_raw`, `E_th`, `E_pw`, `rolling_peak`
-- Thermal: `temp_c`, `vram_temp_c`, `t_sustain_s`
-- Power/Perf: `power_w`, `util_pct`, `a_load`, `fan_pct`
-- Events: `collapse`, `alerts`
-- Optional extended: clocks, perf state, throttle reasons, `cycles_per_joule`
+- Temperature: `temp_c`, `vram_temp_c`, `t_sustain_s`
+- Power/Performance: `power_w`, `util_pct`, `a_load`, `fan_pct`
+- Events/Diagnostics: `collapse`, `alerts`
 
-See: [DATA_COLLECTION.md](DATA_COLLECTION.md) • [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
+Extended (if available):
+- `gpu_clock_mhz`, `mem_clock_mhz`, `mem_used_mb`, `mem_total_mb`, `perf_state`, `throttle_reasons`, `power_limit_w`, `cycles_per_joule`
+
+Stability of schema:
+- Append-only; types/order do not change to preserve tool compatibility
 
 ---
 
-## 8. RLE Physics (Law)
-Why RLE works across devices:
-- Unitless ratios remove device-specific units
-- Encodes thermal headroom (E_th) and power use (E_pw)
-- Predicts collapse before firmware (lead time)
+## 7. Interpreting Results (Patterns & Decisions)
+Healthy Gaming:
+- RLE 0.3–0.8 most of session; temps 60–72°C; collapses <5% → OK
 
-See: [RLE_PHYSICS.md](RLE_PHYSICS.md) • [WHAT_IS_RLE.md](WHAT_IS_RLE.md)
+Thermal Saturation:
+- RLE gradual decline with rising temps; more collapses late session → Improve cooling / take breaks
+
+Power Limited:
+- A_load near 1.0, E_pw low, temps OK; RLE suppressed → Expected when power-capped; consider undervolt or higher power limit
+
+True Thermal Collapse:
+- RLE sustained 0.15–0.25; temp near limit; T_sustain low; collapses clustered → Back off load or improve cooling
+
+Efficiency Degradation:
+- Same scene; RLE lower later → thermal mass saturation; schedule cooldowns
+
+Quick decisions:
+- RLE > 0.4 consistently → Healthy
+- Many collapses with evidence → Thermal/power problem
+- Low E_th vs low E_pw identifies thermal vs power bottleneck
+
+---
+
+## 8. RLE Physics (Why It’s Universal)
+- Dimensionless: unit cancellation enables cross-device comparison
+- Encodes thermal headroom (E_th) and power use (E_pw)
+- Predictive: RLE fall precedes firmware throttling by ~0.7–1.0 s
+- Cross-domain variance σ ≈ 0.16 across CPU/GPU/SoC proves universal behavior
 
 ---
 
@@ -141,60 +149,43 @@ See: [RLE_PHYSICS.md](RLE_PHYSICS.md) • [WHAT_IS_RLE.md](WHAT_IS_RLE.md)
 - Constants: collapse -0.0043 RLE/s; stabilization 0.0048 RLE/s; sensitivity -0.2467 RLE/°C
 - Outcome: mobile overlaps desktop RLE ranges; predictive lead time <1 s
 
-See: [MOBILE_RLE_VALIDATION.md](MOBILE_RLE_VALIDATION.md)
-
 ---
 
 ## 10. Topology Invariance
 - Isolation (r ≈ 0) vs Coupling (r ≈ 0.47): RLE remains predictive
 - No coupling assumption required; adapts to topology
 
-See: [TOPOLOGY_INVARIANCE.md](TOPOLOGY_INVARIANCE.md)
+---
+
+## 11. Publication Package (Abstract & Figures)
+- Methods, figures checklist (timeline, knee boundary, topology panels, ceiling)
+- Abstract emphasizes universality, predictivity, constants, reproducibility
 
 ---
 
-## 11. Publication Package
-- Methods summary, figures checklist, abstract
-- Figures: predictive timeline, knee boundary, isolation vs coupling, efficiency ceiling
-
-See: [PUBLICATION.md](PUBLICATION.md)
-
----
-
-## 12. Usage & Troubleshooting
-- Start monitor, view dashboard, generate reports
-- Common issues: NVML loading, missing columns (pre-v0.3), dashboard path
-
-See: [USAGE.md](USAGE.md) • [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+## 12. Usage & Troubleshooting (Pointers)
+- Start monitor, live dashboard, per-hour PDF reports
+- Common issues: NVML load, old CSVs missing new columns, dashboard path
 
 ---
 
 ## 13. Glossary
-- RLE: Recursive Load Efficiency (dimensionless efficiency index)
-- E_th: Thermal efficiency component (headroom proxy)
-- E_pw: Power efficiency component (util vs load)
-- A_load: Aggressive load (power/rated)
-- T_sustain: Time until thermal limit (s)
-- Rolling peak: Adaptive reference for collapse detection
-- Collapse: True, evidenced efficiency drop (not scene change)
+- RLE, E_th, E_pw, A_load, T_sustain, rolling peak, collapse
 
 ---
 
-## 14. Indices & Next Steps
-- Docs Index: [INDEX.md](INDEX.md)
+## 14. Evidence & Reproducibility
+- Proof sessions and metrics: see `lab/sessions/PROOF_SESSIONS.md`
+- Mobile dataset and constants scripts available in repo
+
+---
+
+## 15. Indices & Next Steps
+- Docs Index: `INDEX.md`
 - Next Steps: stress tests, figure extraction, arXiv submission
-- Changelog: [CHANGELOG.md](CHANGELOG.md)
+- Changelog: `CHANGELOG.md`
 
 ---
 
-## 15. Key Claims (One Page)
-- Universal: same law across CPU/GPU/SoC, σ ≈ 0.16
-- Predictive: 0.7–1.0 s lead time before firmware throttle
-- Economic boundary: knee point defines efficient operating limit
-- Dimensionless: comparable across power scales (4W→300W)
-
----
-
-## 16. File Map (At a Glance)
-- Master: this document (`RLE_Master.md`)
-- Deep dives: WHAT_IS_RLE, ARCHITECTURE, DATA_COLLECTION, INTERPRETING_RESULTS, MOBILE_RLE_VALIDATION, TOPOLOGY_INVARIANCE, PUBLICATION, TROUBLESHOOTING, QUICK_REFERENCE, GETTING_STARTED, USAGE
+## 16. Key Claims (One Page)
+- Universal, predictive, dimensionless; economic boundary via knee point; σ ≈ 0.16
