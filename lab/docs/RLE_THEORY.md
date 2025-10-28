@@ -103,7 +103,7 @@ See `lab/docs/MOBILE_RLE_VALIDATION.md` and `lab/sessions/PROOF_SESSIONS.md` for
 
 ## 12) Sources & Appendices
 - Technical sources index (Final Proof): `lab/docs/archive/Final_Proof/INDEX.md`
-- Extracted appendices (snippets, equations): `lab/docs/RLE_THEORY_APPENDICES.md`
+- Extracted appendices (snippets, equations): `lab/docs/RLE_THEORY_APPENDICES.md` (covers all scanner-identified RLE-related sources)
 
 Notes:
 - Only technical items were included (thermal horizon, load normalization, utilization/stability, energy/entropy). Poetry/fantasy content was excluded by design.
