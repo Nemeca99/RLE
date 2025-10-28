@@ -61,6 +61,17 @@ python lab/analyze_session.py
 python kia_validate.py
 ```
 
+### 🧠 Core Engine (Executable Physics)
+
+Augment any CSV with canonical RLE metrics using the core engine:
+
+```bash
+python lab/monitoring/rle_core.py \
+  --in lab/sessions/recent/rle_YYYYMMDD_HH.csv \
+  --out lab/sessions/recent/rle_YYYYMMDD_HH_core.csv \
+  --rated-power 125 --temp-limit 85
+```
+
 ## 📊 RLE_real Formula
 
 Computes a metric balancing useful output vs stress, waste, instability, and time-to-burnout:
@@ -97,9 +108,9 @@ adb install -r app/build/outputs/apk/debug/rle-mobile-debug.apk
 - 📖 [Getting Started](lab/docs/GETTING_STARTED.md) - 5-minute walkthrough
 - ⚡ [Quick Reference](lab/docs/QUICK_REFERENCE.md) - Command cheat sheet & CSV guide
 - 🐛 [Troubleshooting](lab/docs/TROUBLESHOOTING.md) - Common issues & solutions
-- 📖 [What is RLE?](lab/docs/WHAT_IS_RLE.md) - Formula explained with examples
-- 🏗️ [Architecture](lab/docs/ARCHITECTURE.md) - System diagrams & state machines
+- 📖 [RLE Master (canonical)](lab/docs/RLE_Master.md) - One doc to rule them all
 - 📚 [Docs Index](lab/docs/INDEX.md) - All docs in one place
+- 🧭 [Docs Architecture](lab/docs/README_ARCHITECTURE.md) - Full document graph & policy
 
 **After collecting data**, analyze with same tools:
 
@@ -129,7 +140,7 @@ python lab/analysis/cross_domain_rle.py \
 
 | Location | Purpose |
 |----------|---------|
-| `lab/monitoring/` | Background daemon for continuous logging |
+| `lab/monitoring/` | Background daemons & core engine |
 | `lab/analysis/` | Post-session analysis & plotting tools |
 | `lab/stress/` | CPU/GPU stress test generators |
 | `lab/sessions/recent/` | Current gaming session CSVs |
@@ -137,17 +148,14 @@ python lab/analysis/cross_domain_rle.py \
 
 ## 📊 CSV Output Format
 
-Each session logs to `sessions/recent/rle_YYYYMMDD_HH.csv` with **22 columns** organized by type:
+Each session logs to `sessions/recent/rle_YYYYMMDD_HH.csv` with columns organized by type:
 - **Identification**: `timestamp`, `device`
 - **Efficiency Metrics**: `rle_smoothed`, `rle_raw`, `E_th`, `E_pw`, `rolling_peak`
 - **Temperature Metrics**: `temp_c`, `vram_temp_c`, `t_sustain_s`
 - **Power/Performance**: `power_w`, `util_pct`, `a_load`, `fan_pct`
-- **GPU Clocks**: `gpu_clock_mhz`, `mem_clock_mhz` (core/memory speeds)
-- **Memory**: `mem_used_mb`, `mem_total_mb` (VRAM usage)
-- **Performance State**: `perf_state`, `throttle_reasons`, `power_limit_w`
 - **Events/Diagnostics**: `collapse`, `alerts`
 
-📚 **See `lab/docs/DATA_COLLECTION.md`** for complete data dictionary and interpretation guide.
+📚 See `lab/docs/DATA_COLLECTION.md` for the full, up-to-date schema and column details.
 
 Sample row:
 
@@ -162,7 +170,7 @@ Sample row:
 | `temp_c` | Core temperature (°C) | `75.00` |
 | `vram_temp_c` | VRAM/junction temp (°C) | `82.00` |
 | `power_w` | Power draw (W) | `198.50` |
-| `util_pct` | GPU utilization (%) | `99.00` |
+| `util_pct` | Utilization (%) | `99.00` |
 | `a_load` | Normalized load (power/rated) | `0.993` |
 | `t_sustain_s` | Seconds to thermal limit | `310.0` |
 | `fan_pct` | Fan speed (%) | `80` |
@@ -197,25 +205,23 @@ See `Magic/README_data_tools.md` for details.
 ---
 
 **Documentation**:
+- 📖 [RLE Master (canonical)](lab/docs/RLE_Master.md)
+- 📚 [Docs Index](lab/docs/INDEX.md)
+- 🧭 [Docs Architecture](lab/docs/README_ARCHITECTURE.md)
 - 🚀 [Getting Started](lab/docs/GETTING_STARTED.md) - 5-minute walkthrough
 - ⚡ [Quick Reference](lab/docs/QUICK_REFERENCE.md) - Command cheat sheet & CSV guide
 - 🐛 [Troubleshooting](lab/docs/TROUBLESHOOTING.md) - Common issues & solutions
-- 📖 [What is RLE?](lab/docs/WHAT_IS_RLE.md) - Formula explained with examples
-- 📊 [Interpreting Results](lab/docs/INTERPRETING_RESULTS.md) - Guide to analyzing sessions
-- 🏗️ [Architecture](lab/docs/ARCHITECTURE.md) - System diagrams & state machines
-- 📚 [Docs Index](lab/docs/INDEX.md) - All docs in one place
+- 📊 [Publication Package](lab/docs/PUBLICATION.md) - Results & figures
 
 **Analysis Tools**:
 - `analyze_session.py` - Single session analysis with health assessment
 - `scripts/batch_analyze.py` - Multi-session comparison
 
 **Recent improvements** (v0.4.0):
-- ✅ Improved collapse detection (rolling peak, evidence requirements, 7s hysteresis) 
+- ✅ Improved collapse detection (rolling peak, evidence requirements, 7s hysteresis)
 - ✅ Reduced false positives from 51% → single digits
 - ✅ Added Streamlit real-time dashboard
 - ✅ Split diagnostics (E_th vs E_pw)
-- ✅ **Mobile deployment** (Android app OR Physics Toolbox converter for Galaxy S24+)
-- ✅ **Mobile RLE validated**: Galaxy S24 Ultra thermal dataset (33°C→44°C, 1000 samples), extracted constants (collapse/stabilization rates, thermal sensitivity), proven universal across 4W→300W power range
-
-See [lab/docs/CHANGELOG.md](lab/docs/CHANGELOG.md) for full version history.
+- ✅ **Core engine**: `lab/monitoring/rle_core.py` for canonical formula/scaling/control
+- ✅ **Mobile RLE validated**: Cross-form-factor data and scaling model consolidated in docs
 
