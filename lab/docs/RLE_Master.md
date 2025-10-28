@@ -7,6 +7,8 @@ RLE (Recursive Load Efficiency) is a dimensionless, predictive, topology-invaria
 - Predictive lead time: ~0.7–1.0 s before firmware throttling
 - Mobile constants (S24 Ultra): collapse -0.0043 RLE/s, stabilization 0.0048 RLE/s, thermal sensitivity -0.2467 RLE/°C
 
+See: [RLE Theory (first-principles derivation)](RLE_THEORY.md)
+
 ---
 
 ## 2. What is RLE (Definition, Formula, Components)
