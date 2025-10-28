@@ -100,3 +100,10 @@ We clip with \(\varepsilon\) to avoid division by zero and restrict to rising-te
 
 ## 11) Empirical Validation (Pointer)
 See `lab/docs/MOBILE_RLE_VALIDATION.md` and `lab/sessions/PROOF_SESSIONS.md` for constants, datasets, and session-level evidence consistent with this derivation.
+
+## 12) Sources & Appendices
+- Technical sources index (Final Proof): `lab/docs/archive/Final_Proof/INDEX.md`
+- Extracted appendices (snippets, equations): `lab/docs/RLE_THEORY_APPENDICES.md`
+
+Notes:
+- Only technical items were included (thermal horizon, load normalization, utilization/stability, energy/entropy). Poetry/fantasy content was excluded by design.
