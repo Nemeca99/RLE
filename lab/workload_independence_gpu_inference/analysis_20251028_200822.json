@@ -1,0 +1,23 @@
+{
+  "session_id": "20251028_200822",
+  "model": "distilgpt2",
+  "duration": 180,
+  "aligned_samples": 201,
+  "correlations": {
+    "gpu_grad_rle": -0.2553392711247475,
+    "gpu_temp_grad": -0.4932124524489896,
+    "gpu_loss_rle": -0.3440254673182463
+  },
+  "peak_lag": 0,
+  "peak_correlation": -0.2553392711247475,
+  "causal_order": false,
+  "session_start": 1761700102.3552012,
+  "ambient_temp": 21.0,
+  "instrument_name": "RLE Thermal-Optimization Coupling Analysis",
+  "version": "1.0.0",
+  "git_hash": "0bf4e00a",
+  "git_status": "dirty",
+  "python_version": "3.11.0",
+  "timestamp": "2025-10-28T20:11:22.811090",
+  "reproducibility": "Scientific instrument with version tracking"
+}

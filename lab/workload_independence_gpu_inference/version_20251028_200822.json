@@ -1,0 +1,10 @@
+{
+  "instrument_name": "RLE Thermal-Optimization Coupling Analysis",
+  "version": "1.0.0",
+  "git_hash": "0bf4e00a",
+  "git_status": "dirty",
+  "python_version": "3.11.0",
+  "timestamp": "2025-10-28T20:11:22.855626",
+  "reproducibility": "Scientific instrument with version tracking",
+  "session_id": "20251028_200822"
+}

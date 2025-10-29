@@ -1,0 +1,231 @@
+{
+  "analysis_timestamp": "2025-10-28T20:14:42.729174",
+  "total_sessions": 5,
+  "session_types": [
+    "Training (Reproducibility)",
+    "CPU Inference",
+    "GPU Inference"
+  ],
+  "detailed_results": [
+    {
+      "session_dir": "reproducibility_test_1",
+      "session_type": "Training (Reproducibility)",
+      "samples": 168,
+      "peak_lag": 0,
+      "peak_correlation": -0.03637431951894413,
+      "lag_correlations": {
+        "-3": {
+          "correlation": -0.02327735086369733,
+          "p_value": 0.7666420381065331,
+          "interpretation": "RLE leads by 3s"
+        },
+        "-2": {
+          "correlation": -0.036184437633575796,
+          "p_value": 0.6434842955297999,
+          "interpretation": "RLE leads by 2s"
+        },
+        "-1": {
+          "correlation": -0.02629527537239817,
+          "p_value": 0.7358787769530831,
+          "interpretation": "RLE leads by 1s"
+        },
+        "0": {
+          "correlation": -0.03637431951894413,
+          "p_value": 0.6397130555849903,
+          "interpretation": "No lag"
+        },
+        "1": {
+          "correlation": 0.0038325032184559466,
+          "p_value": 0.9607957386288084,
+          "interpretation": "grad_norm leads by 1s"
+        },
+        "2": {
+          "correlation": -0.004594505546856241,
+          "p_value": 0.9531519777145893,
+          "interpretation": "grad_norm leads by 2s"
+        },
+        "3": {
+          "correlation": 0.030649731053277698,
+          "p_value": 0.6959438041264799,
+          "interpretation": "grad_norm leads by 3s"
+        }
+      }
+    },
+    {
+      "session_dir": "reproducibility_test_2",
+      "session_type": "Training (Reproducibility)",
+      "samples": 166,
+      "peak_lag": 0,
+      "peak_correlation": -0.08973024011749617,
+      "lag_correlations": {
+        "-3": {
+          "correlation": -0.06545587092971739,
+          "p_value": 0.40645737288097833,
+          "interpretation": "RLE leads by 3s"
+        },
+        "-2": {
+          "correlation": -0.07959813357057702,
+          "p_value": 0.310981247678912,
+          "interpretation": "RLE leads by 2s"
+        },
+        "-1": {
+          "correlation": -0.07702283620352662,
+          "p_value": 0.32545176480743687,
+          "interpretation": "RLE leads by 1s"
+        },
+        "0": {
+          "correlation": -0.08973024011749617,
+          "p_value": 0.25027643213097334,
+          "interpretation": "No lag"
+        },
+        "1": {
+          "correlation": -0.057389717213002116,
+          "p_value": 0.4640564412861873,
+          "interpretation": "grad_norm leads by 1s"
+        },
+        "2": {
+          "correlation": -0.06515409016037815,
+          "p_value": 0.4071730864217539,
+          "interpretation": "grad_norm leads by 2s"
+        },
+        "3": {
+          "correlation": -0.03866651172523391,
+          "p_value": 0.6241019620337077,
+          "interpretation": "grad_norm leads by 3s"
+        }
+      }
+    },
+    {
+      "session_dir": "reproducibility_test_3",
+      "session_type": "Training (Reproducibility)",
+      "samples": 168,
+      "peak_lag": -2,
+      "peak_correlation": -0.13348176331732292,
+      "lag_correlations": {
+        "-3": {
+          "correlation": -0.12658298151018435,
+          "p_value": 0.1051999502779125,
+          "interpretation": "RLE leads by 3s"
+        },
+        "-2": {
+          "correlation": -0.13348176331732292,
+          "p_value": 0.08644103082536657,
+          "interpretation": "RLE leads by 2s"
+        },
+        "-1": {
+          "correlation": -0.1278684695542299,
+          "p_value": 0.09960313776053364,
+          "interpretation": "RLE leads by 1s"
+        },
+        "0": {
+          "correlation": -0.1325043492869097,
+          "p_value": 0.08686202229225747,
+          "interpretation": "No lag"
+        },
+        "1": {
+          "correlation": -0.09363332709106065,
+          "p_value": 0.2287569755505118,
+          "interpretation": "grad_norm leads by 1s"
+        },
+        "2": {
+          "correlation": -0.09763658831672947,
+          "p_value": 0.21077173866936025,
+          "interpretation": "grad_norm leads by 2s"
+        },
+        "3": {
+          "correlation": -0.05344367719383678,
+          "p_value": 0.4953875782065442,
+          "interpretation": "grad_norm leads by 3s"
+        }
+      }
+    },
+    {
+      "session_dir": "workload_independence_cpu_inference",
+      "session_type": "CPU Inference",
+      "samples": 170,
+      "peak_lag": 0,
+      "peak_correlation": -0.1498524910388001,
+      "lag_correlations": {
+        "-3": {
+          "correlation": -0.12923041843048513,
+          "p_value": 0.09601881823354347,
+          "interpretation": "RLE leads by 3s"
+        },
+        "-2": {
+          "correlation": -0.14766907540590543,
+          "p_value": 0.056106742084995886,
+          "interpretation": "RLE leads by 2s"
+        },
+        "-1": {
+          "correlation": -0.13375851196425517,
+          "p_value": 0.08296160066900132,
+          "interpretation": "RLE leads by 1s"
+        },
+        "0": {
+          "correlation": -0.1498524910388001,
+          "p_value": 0.05112252138452022,
+          "interpretation": "No lag"
+        },
+        "1": {
+          "correlation": -0.12109434945667275,
+          "p_value": 0.11680645481847873,
+          "interpretation": "grad_norm leads by 1s"
+        },
+        "2": {
+          "correlation": -0.1309309909065648,
+          "p_value": 0.09070709463883615,
+          "interpretation": "grad_norm leads by 2s"
+        },
+        "3": {
+          "correlation": -0.10737554598555804,
+          "p_value": 0.16722601566373885,
+          "interpretation": "grad_norm leads by 3s"
+        }
+      }
+    },
+    {
+      "session_dir": "workload_independence_gpu_inference",
+      "session_type": "GPU Inference",
+      "samples": 166,
+      "peak_lag": 0,
+      "peak_correlation": -0.13061255345676268,
+      "lag_correlations": {
+        "-3": {
+          "correlation": -0.09965029585320034,
+          "p_value": 0.2056522505561407,
+          "interpretation": "RLE leads by 3s"
+        },
+        "-2": {
+          "correlation": -0.11810648522564415,
+          "p_value": 0.1320135442011258,
+          "interpretation": "RLE leads by 2s"
+        },
+        "-1": {
+          "correlation": -0.11139916660928317,
+          "p_value": 0.15429961470702477,
+          "interpretation": "RLE leads by 1s"
+        },
+        "0": {
+          "correlation": -0.13061255345676268,
+          "p_value": 0.09348341883976316,
+          "interpretation": "No lag"
+        },
+        "1": {
+          "correlation": -0.09931071815084039,
+          "p_value": 0.20440145321168005,
+          "interpretation": "grad_norm leads by 1s"
+        },
+        "2": {
+          "correlation": -0.10068859534972403,
+          "p_value": 0.19954701645219572,
+          "interpretation": "grad_norm leads by 2s"
+        },
+        "3": {
+          "correlation": -0.07302299362283017,
+          "p_value": 0.3542600807588202,
+          "interpretation": "grad_norm leads by 3s"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+
+THERMAL-OPTIMIZATION COUPLING ANALYSIS REPORT
+============================================
+
+Session Information:
+  Session ID: 20251028_200032
+  Model: distilgpt2
+  Duration: 180s
+  Ambient Temperature: 21.0°C
+  Aligned Samples: 201
+
+Correlation Analysis:
+  GPU grad_norm ↔ RLE: 0.260
+  GPU temp ↔ grad_norm: -0.793
+  GPU loss ↔ RLE: 0.277
+
+Causal Analysis:
+  Peak Correlation: 0.260 at lag 0s
+  Causal Order: RLE → grad_norm
+
+Interpretation:
+  ⚠️  Weak thermal-optimization coupling
+  ⚠️  Reverse or simultaneous causality
+  ✅ Sufficient data for analysis
+
+Files Generated:
+  - rle_data_20251028_200032.csv
+  - training_log_20251028_200032.json
+  - analysis_20251028_200032.json
+  - report_20251028_200032.txt
+
+Next Steps:
+  - Run multiple sessions for reproducibility analysis
+  - Vary model parameters to test coupling sensitivity
+  - Use results for thermal-aware AI system design
