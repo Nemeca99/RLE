@@ -1,6 +1,6 @@
 # RLE (Recursive Load Efficiency) - Standalone Release v1.0
 
-A complete, portable research toolkit for validating thermal efficiency metrics across heterogeneous computing systems.
+A general physical law unifying thermodynamic and computational efficiency under probabilistic containment, validated across heterogeneous computing systems with empirical cross-device stress tests.
 
 ## RLE Formula & Thermal Interaction
 
@@ -179,5 +179,6 @@ MIT License - see LICENSE file
 
 **Version**: 1.0  
 **Release Date**: 2025-10-30  
+**DOI**: Pending (Zenodo auto-generated upon publication)  
 **Validated**: Cross-device empirical stress tests  
 **Status**: Production-ready standalone research toolkit
