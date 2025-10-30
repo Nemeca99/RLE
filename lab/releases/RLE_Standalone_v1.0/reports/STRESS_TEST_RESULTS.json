@@ -1,0 +1,24 @@
+{
+  "timestamp": "2025-10-30T21:13:52.149197",
+  "results": [
+    {
+      "test": "topology_independence",
+      "correlation": -0.21222371969413
+    },
+    {
+      "test": "universal_scaling",
+      "cv_mean": 0.8127495697623873,
+      "cv_std": 0.2899437321973102
+    },
+    {
+      "test": "thermal_paths",
+      "correlation": -0.361647151953095
+    },
+    {
+      "test": "harmonic_containment",
+      "avg_drift": 0.6650098713688909,
+      "max_range": 2.799918
+    }
+  ],
+  "breaks_detected": 1
+}

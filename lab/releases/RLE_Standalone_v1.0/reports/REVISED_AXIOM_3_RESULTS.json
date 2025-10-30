@@ -1,0 +1,39 @@
+{
+  "timestamp": "2025-10-30T21:32:31.484297",
+  "results": [
+    {
+      "label": "Phone",
+      "P_k": 11.33352453556493,
+      "robust_drift": 5.6363359626800165,
+      "q99_q01": 0.35421844431596,
+      "below_knee": true,
+      "verdict": "WARNING",
+      "regimes": 2
+    },
+    {
+      "label": "Laptop",
+      "P_k": 22.254285714285714,
+      "robust_drift": 23.791573313417967,
+      "q99_q01": 0.9557075,
+      "below_knee": false,
+      "verdict": "EXEMPT",
+      "regimes": 1
+    },
+    {
+      "label": "PC GPU",
+      "P_k": 21.092769911504426,
+      "robust_drift": 2.325253995647933,
+      "q99_q01": 2.72700208,
+      "below_knee": false,
+      "verdict": "EXEMPT",
+      "regimes": 3
+    }
+  ],
+  "tests": [
+    "knee_power_detection",
+    "robust_drift_measurement",
+    "regime_segmentation",
+    "allan_variance",
+    "domain_restrictions"
+  ]
+}

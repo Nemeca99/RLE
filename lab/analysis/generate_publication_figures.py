@@ -1,5 +1,146 @@
 #!/usr/bin/env python3
 """
+Generate publication-ready cross-device figures:
+- cross_device_overlays.png: RLE boxplots and collapse-rate bars for PC, Phone, Laptop
+- cross_device_panel.png: 3x time-series panels (Phone, Laptop, PC) RLE vs sample index
+"""
+from pathlib import Path
+from datetime import datetime
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Inputs
+PHONE = Path('lab/sessions/archive/mobile/phone_all_benchmarks.csv')
+PHONE_ALT = Path('lab/sessions/archive/mobile/phone_rle_wildlife.csv')
+LAPTOP_1 = Path('sessions/laptop/rle_20251030_19.csv')
+LAPTOP_2 = Path('sessions/laptop/rle_20251030_20 - Copy.csv')
+PC_CPU = Path('lab/sessions/recent/rle_20251027_09.csv')
+PC_GPU = Path('lab/sessions/recent/rle_20251028_08.csv')
+
+OUT_DIR = Path('lab/sessions/archive/plots')
+OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+def load_rle(path: Path, device_preference: str | None = None) -> pd.Series:
+    if not path.exists():
+        return pd.Series(dtype=float)
+    df = pd.read_csv(path)
+    if 'device' in df.columns and device_preference:
+        df = df[df['device'] == device_preference]
+    rle_col = 'rle_smoothed' if 'rle_smoothed' in df.columns else ('rle_raw' if 'rle_raw' in df.columns else None)
+    if rle_col is None:
+        return pd.Series(dtype=float)
+    s = pd.to_numeric(df[rle_col], errors='coerce').dropna()
+    return s
+
+def load_collapse_rate(path: Path, device_preference: str | None = None) -> float:
+    if not path.exists():
+        return np.nan
+    df = pd.read_csv(path)
+    if 'device' in df.columns and device_preference:
+        df = df[df['device'] == device_preference]
+    if 'collapse' not in df.columns:
+        return 0.0
+    c = pd.to_numeric(df['collapse'], errors='coerce').fillna(0)
+    return float(100.0 * c.mean())
+
+def first_n(series: pd.Series, n: int = 300) -> pd.Series:
+    return series.reset_index(drop=True).iloc[:n]
+
+def figure_overlays():
+    # Choose sources
+    phone_path = PHONE if PHONE.exists() else PHONE_ALT
+    phone_rle = load_rle(phone_path, device_preference='mobile')
+    laptop_rle = pd.concat([
+        load_rle(LAPTOP_1, device_preference='cpu'),
+        load_rle(LAPTOP_2, device_preference='cpu'),
+    ], ignore_index=True)
+    pc_cpu_rle = load_rle(PC_CPU, device_preference='cpu')
+    pc_gpu_rle = load_rle(PC_GPU, device_preference='gpu')
+    pc_rle = pd.concat([pc_cpu_rle, pc_gpu_rle], ignore_index=True)
+
+    # Collapse
+    phone_col = load_collapse_rate(phone_path, device_preference='mobile')
+    laptop_col = np.nanmean([
+        load_collapse_rate(LAPTOP_1, device_preference='cpu'),
+        load_collapse_rate(LAPTOP_2, device_preference='cpu'),
+    ])
+    pc_col = np.nanmean([
+        load_collapse_rate(PC_CPU, device_preference='cpu'),
+        load_collapse_rate(PC_GPU, device_preference='gpu'),
+    ])
+
+    labels = ['PC', 'Phone', 'Laptop']
+    data = [pc_rle, phone_rle, laptop_rle]
+    collapse = [pc_col, phone_col, laptop_col]
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    fig.suptitle('Cross-Device RLE Overlays', fontsize=14, fontweight='bold')
+
+    # Boxplots of RLE
+    axes[0].boxplot([d.dropna() for d in data], labels=labels, showfliers=False)
+    axes[0].set_ylabel('RLE')
+    axes[0].set_title('RLE Distribution by System')
+    axes[0].grid(alpha=0.3)
+
+    # Collapse rates
+    axes[1].bar(labels, [0 if np.isnan(x) else x for x in collapse], color=['tab:blue','tab:orange','tab:green'])
+    axes[1].set_ylabel('Collapse Rate (%)')
+    axes[1].set_title('Collapse Rate by System')
+    axes[1].grid(alpha=0.3, axis='y')
+
+    out = OUT_DIR / 'cross_device_overlays.png'
+    fig.tight_layout()
+    fig.savefig(out, dpi=200, bbox_inches='tight')
+    plt.close(fig)
+    print(f'Saved {out}')
+
+def figure_panel_timeseries():
+    phone_path = PHONE if PHONE.exists() else PHONE_ALT
+    phone_ts = first_n(load_rle(phone_path, device_preference='mobile'))
+    laptop_ts = first_n(pd.concat([
+        load_rle(LAPTOP_1, device_preference='cpu'),
+        load_rle(LAPTOP_2, device_preference='cpu'),
+    ], ignore_index=True))
+    pc_ts = first_n(pd.concat([
+        load_rle(PC_CPU, device_preference='cpu'),
+        load_rle(PC_GPU, device_preference='gpu'),
+    ], ignore_index=True))
+
+    fig, axes = plt.subplots(3, 1, figsize=(12, 8), sharex=False)
+    fig.suptitle('RLE Time Series (First 300 samples per system)', fontsize=14, fontweight='bold')
+
+    axes[0].plot(phone_ts.values, color='tab:orange', lw=1.5)
+    axes[0].set_title('Phone (mobile)')
+    axes[0].set_ylabel('RLE')
+    axes[0].grid(alpha=0.3)
+
+    axes[1].plot(laptop_ts.values, color='tab:green', lw=1.5)
+    axes[1].set_title('Laptop (cpu)')
+    axes[1].set_ylabel('RLE')
+    axes[1].grid(alpha=0.3)
+
+    axes[2].plot(pc_ts.values, color='tab:blue', lw=1.5)
+    axes[2].set_title('PC (cpu+gpu)')
+    axes[2].set_ylabel('RLE')
+    axes[2].set_xlabel('Sample Index')
+    axes[2].grid(alpha=0.3)
+
+    out = OUT_DIR / 'cross_device_panel.png'
+    fig.tight_layout()
+    fig.savefig(out, dpi=200, bbox_inches='tight')
+    plt.close(fig)
+    print(f'Saved {out}')
+
+def main():
+    figure_overlays()
+    figure_panel_timeseries()
+
+if __name__ == '__main__':
+    main()
+
+#!/usr/bin/env python3
+"""
 Generate Publication-Ready Figures
 Extract key graphs from session data for paper submission
 """
