@@ -2,6 +2,30 @@
 
 A complete, portable research toolkit for validating thermal efficiency metrics across heterogeneous computing systems.
 
+## RLE Formula & Thermal Interaction
+
+```
+RLE = (utilization × stability) / (load_factor × (1 + 1/thermal_constant))
+
+┌─────────────────────────────────────────────────────────┐
+│  Utilization (η)  ──┐                                   │
+│                      │                                   │
+│  Stability (σ)  ─────┼──→  RLE  ←─────────────────     │
+│                      │                                   │
+│  Load (α)       ─────┘                                   │
+│                      ↑                                   │
+│                      │                                   │
+└─────────────────────────────────────────────────────────┘
+                    ↓
+         Temperature  ↔  Power
+              ↓              ↓
+         Thermal       Knee Power
+         Coupling      Detection
+```
+
+**RLE captures**: How efficiently a system converts thermal stress into useful work  
+**Key Insight**: Below knee power (P_k), RLE is quantile-bounded; above P_k, behavior is unbounded by design
+
 ## Summary
 
 **Miner's Unified Laws** of recursive physics validated across 3 isolated platforms (PC, Phone, Laptop) with 3,000+ empirical samples and stress-tested axioms.
