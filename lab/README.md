@@ -151,3 +151,11 @@ For scientific collaboration or technical questions:
 - Repository: https://github.com/Nemeca99/RLE
 - Issues: Use GitHub issues for technical problems
 - Research: Contact for academic collaboration
+
+## Portable Run (Windows)
+
+Use `portable/` for a self-contained run on any machine:
+- `portable/RUN_PORTABLE.bat` → creates local venv, installs deps, starts monitor + dashboard
+- `portable/QUICK_TEST.bat` → hardware scan → 60s idle baseline → 120s test
+- Hardware snapshot saved to `portable/hardware_snapshot.json`
+- All CSVs/reports remain under `sessions/recent/`

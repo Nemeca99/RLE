@@ -556,3 +556,12 @@ RLE/
 - Import paths fixed - stress tests correctly reference analysis module
 - Distribution ZIPs archived in `releases/` folder
 
+### Portable Bundle (Session: 2025-10-30)
+
+- Added fully self-contained portable runner in `lab/portable/`:
+  - `RUN_PORTABLE.bat` creates local venv, installs deps, launches monitor + dashboard
+  - `QUICK_TEST.bat` performs hardware scan, 60s idle baseline, then 120s test
+  - `hw_scan.py` writes `lab/portable/hardware_snapshot.json`
+  - `README_PORTABLE.md` documents workflow and troubleshooting
+- All outputs (CSVs/reports/snapshot) stay under `lab/` for portability across machines
+
