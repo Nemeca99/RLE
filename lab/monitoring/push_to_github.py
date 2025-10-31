@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
 Auto-push latest RLE CSV to GitHub for Streamlit Cloud to read
+Uses GitHub Contents API to update file without commit spam
 Runs as a background daemon alongside the monitor
 """
-import subprocess
 import time
 from pathlib import Path
+import base64
+import requests
 import os
 
 def find_latest_csv():
@@ -20,71 +22,77 @@ def find_latest_csv():
     
     return max(csv_files, key=lambda p: p.stat().st_mtime)
 
-def push_to_github(csv_path, branch="live-data"):
-    """Commit and push CSV to GitHub"""
-    repo_root = Path(__file__).parent.parent.parent
+def push_to_github(csv_path, github_token=None, branch="live-data"):
+    """
+    Update CSV on GitHub using Contents API (no commit spam)
+    Updates the same file without creating commit history
+    """
+    # Get token from environment or prompt
+    token = github_token or os.environ.get('GITHUB_TOKEN')
+    if not token:
+        print("[GitHub Sync] ERROR: GITHUB_TOKEN not set. Create a GitHub Personal Access Token and set it as environment variable.")
+        print("  Set it: $env:GITHUB_TOKEN='your_token_here'  (PowerShell)")
+        print("  Get token: https://github.com/settings/tokens (repo scope)")
+        return False
+    
+    # GitHub repo config
+    owner = "Nemeca99"
+    repo = "RLE"
+    file_path = "lab/sessions/live/latest.csv"
     
     try:
-        # Copy CSV to a predictable location
-        target_path = repo_root / "lab" / "sessions" / "live" / "latest.csv"
-        target_path.parent.mkdir(parents=True, exist_ok=True)
+        # Read CSV content
+        with open(csv_path, 'rb') as f:
+            content = f.read()
+        content_b64 = base64.b64encode(content).decode('utf-8')
         
-        # Copy file
-        import shutil
-        shutil.copy2(csv_path, target_path)
+        # Check if file exists (get SHA for update)
+        url = f"https://api.github.com/repos/{owner}/{repo}/contents/{file_path}"
+        headers = {
+            'Authorization': f'token {token}',
+            'Accept': 'application/vnd.github.v3+json'
+        }
         
-        # Git operations
-        os.chdir(repo_root)
+        # Get current file SHA (if exists)
+        get_resp = requests.get(url, headers=headers, params={'ref': branch}, timeout=5)
+        sha = None
+        if get_resp.status_code == 200:
+            sha = get_resp.json().get('sha')
         
-        # Check if branch exists, create if not
-        branch_check = subprocess.run(
-            ["git", "branch", "--list", branch],
-            capture_output=True,
-            text=True
-        )
+        # Update file
+        data = {
+            'message': f'Update live RLE data {time.strftime("%Y%m%d_%H%M%S")}',
+            'content': content_b64,
+            'branch': branch
+        }
+        if sha:
+            data['sha'] = sha  # Include SHA for updates
         
-        if branch not in branch_check.stdout:
-            # Create branch
-            subprocess.run(["git", "checkout", "-b", branch], capture_output=True, check=False)
-        else:
-            # Switch to branch
-            subprocess.run(["git", "checkout", branch], capture_output=True, check=False)
+        put_resp = requests.put(url, headers=headers, json=data, timeout=10)
         
-        # Add file (use relative path)
-        rel_path = str(target_path.relative_to(repo_root)).replace('\\', '/')
-        subprocess.run(["git", "add", rel_path], check=False, capture_output=True)
-        
-        # Commit
-        commit_msg = f"Update live RLE data {time.strftime('%Y%m%d_%H%M%S')}"
-        subprocess.run(
-            ["git", "commit", "-m", commit_msg],
-            check=False,
-            capture_output=True
-        )
-        
-        # Push
-        result = subprocess.run(
-            ["git", "push", "origin", branch, "--force"],
-            check=False,
-            capture_output=True,
-            text=True
-        )
-        
-        if result.returncode == 0:
+        if put_resp.status_code in (200, 201):
             return True
         else:
-            print(f"Push failed: {result.stderr}")
+            print(f"[GitHub Sync] API error: {put_resp.status_code} - {put_resp.text}")
             return False
     except Exception as e:
-        print(f"Push failed: {e}")
+        print(f"[GitHub Sync] Failed: {e}")
         return False
 
 def main():
-    """Watch and push latest CSV every 30 seconds"""
+    """Watch and push latest CSV every N seconds (configurable)"""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Push RLE CSV to GitHub for Streamlit Cloud")
+    parser.add_argument("--interval", type=int, default=30, help="Update interval in seconds (default: 30)")
+    parser.add_argument("--branch", type=str, default="live-data", help="GitHub branch name (default: live-data)")
+    args = parser.parse_args()
+    
     last_csv = None
     last_mtime = 0
     
-    print("[GitHub Sync] Started - pushing latest CSV every 30s to live-data branch")
+    print(f"[GitHub Sync] Started - pushing latest CSV every {args.interval}s to {args.branch} branch")
+    print("[GitHub Sync] Make sure GITHUB_TOKEN is set in environment")
     
     while True:
         latest = find_latest_csv()
@@ -92,19 +100,14 @@ def main():
         if latest and latest.stat().st_mtime > last_mtime:
             print(f"[GitHub Sync] New CSV detected: {latest.name}")
             
-            if push_to_github(latest):
-                print(f"[GitHub Sync] Successfully pushed {latest.name}")
+            if push_to_github(latest, branch=args.branch):
+                print(f"[GitHub Sync] Successfully updated on GitHub")
                 last_csv = latest
                 last_mtime = latest.stat().st_mtime
-                
-                # Switch back to main branch
-                repo_root = Path(__file__).parent.parent.parent
-                os.chdir(repo_root)
-                subprocess.run(["git", "checkout", "main"], capture_output=True, check=False)
             else:
                 print(f"[GitHub Sync] Push failed for {latest.name}")
         
-        time.sleep(30)  # Check every 30 seconds
+        time.sleep(args.interval)
 
 if __name__ == "__main__":
     main()
