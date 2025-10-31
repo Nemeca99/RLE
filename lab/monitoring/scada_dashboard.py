@@ -58,15 +58,21 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-@st.cache_data
 def load_csv(file_path=None, uploaded_file=None):
-    """Load and cache CSV data from file path or uploaded file"""
+    """Load CSV data from file path or uploaded file"""
     if uploaded_file is not None:
+        # Don't cache uploaded files - they change
         return pd.read_csv(uploaded_file)
     elif file_path and Path(file_path).exists():
-        return pd.read_csv(file_path)
+        # Cache repo files
+        return _load_cached_csv(file_path)
     else:
         return pd.DataFrame()
+
+@st.cache_data
+def _load_cached_csv(file_path):
+    """Cached loader for repo files"""
+    return pd.read_csv(file_path)
 
 @st.cache_data
 def filter_device(df, device):
