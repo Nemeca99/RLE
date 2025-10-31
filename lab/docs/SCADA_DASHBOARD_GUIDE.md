@@ -21,9 +21,24 @@
 
 The RLE LIVE SCADA Dashboard provides **real-time visualization** of thermal efficiency data collected by the RLE monitoring system. It displays hardware telemetry from CPU/GPU sensors and computes Recursive Load Efficiency (RLE) metrics to track system performance under load.
 
+**RLE Definition**: Recursive Load Efficiency (RLE) is a dimensionless ratio describing system stability and efficiency under thermal feedback, computed as `(utilization × stability) / (load_factor × thermal_constant)`.
+
 **Access**: `http://localhost:8501`  
 **Data Source**: Live CSV files from RLE monitor daemon  
 **Update Rate**: Configurable (default: every 5 seconds with auto-refresh)
+
+### Data Flow Architecture
+
+```
+Hardware Sensors → Monitor Daemon → CSV Logger → Dashboard Display
+     (NVML/HWiNFO)   (polling)   (hourly files)   (real-time plots)
+```
+
+**Components**:
+- **Hardware Sensors**: NVML (GPU), HWiNFO (temperature), psutil (CPU)
+- **Monitor Daemon**: `start_monitor.py` runs in background, polls sensors at 1-5 Hz
+- **CSV Logger**: Writes timestamped rows to `rle_YYYYMMDD_HH.csv` (new file every hour)
+- **Dashboard**: Streamlit reads latest CSV, displays live plots and statistics
 
 ---
 
@@ -535,6 +550,33 @@ rle_smoothed: count=697, mean=0.052, std=0.045, min=0.008, max=0.134
 **Export Data**: Click "📥 Export CSV"  
 **Switch Devices**: Use "Show Device" radio buttons  
 **Adjust Rate**: Change "Sample Rate (Hz)" slider
+
+---
+
+## Safety & Best Practices
+
+### Hardware Temperature Monitoring
+
+**⚠️ WARNING**: During stress testing, monitor hardware temperatures closely to prevent thermal damage.
+
+**Recommended Limits**:
+- **CPU**: <85°C sustained, <95°C peak
+- **GPU**: <83°C sustained, <90°C peak
+- **VRAM**: <100°C sustained, <110°C peak
+
+**Red Flags**:
+- Temperature >90°C for >5 minutes
+- Collapse events >10% of samples
+- Power fluctuating wildly (thermal throttling)
+- System instability or random shutdowns
+
+**Actions**:
+1. Reduce load immediately if temperatures exceed limits
+2. Check fan speeds and airflow
+3. Verify thermal paste and cooler contact
+4. Allow full cooldown before next test
+
+**Note**: The collapse detection algorithm is designed to flag efficiency instability, not thermal shutdown. Always monitor actual temperature readings when stress testing.
 
 ---
 
