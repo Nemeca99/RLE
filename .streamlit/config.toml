@@ -5,3 +5,6 @@ headless = true
 [browser]
 gatherUsageStats = false
 
+# Default entry point for Streamlit Cloud
+# Set main file to: lab/monitoring/scada_dashboard_cloud.py
+
