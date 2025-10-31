@@ -59,9 +59,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 @st.cache_data
-def load_csv(file_path):
-    """Load and cache CSV data"""
-    return pd.read_csv(file_path)
+def load_csv(file_path=None, uploaded_file=None):
+    """Load and cache CSV data from file path or uploaded file"""
+    if uploaded_file is not None:
+        return pd.read_csv(uploaded_file)
+    elif file_path and Path(file_path).exists():
+        return pd.read_csv(file_path)
+    else:
+        return pd.DataFrame()
 
 @st.cache_data
 def filter_device(df, device):
@@ -113,7 +118,11 @@ def main():
     with st.sidebar:
         st.markdown("## 🎛️ Control Panel")
         
-        # File selection
+        # File upload option
+        st.markdown("### 📁 Upload CSV File")
+        uploaded_file = st.file_uploader("Choose RLE CSV file", type=['csv'], help="Upload a session CSV from your monitoring")
+        
+        # File selection from repo (if files exist)
         data_sources = {
             'PC GPU Session': 'lab/sessions/recent/rle_20251028_08.csv',
             'Phone Benchmarks': 'lab/sessions/archive/mobile/phone_all_benchmarks.csv',
@@ -121,8 +130,23 @@ def main():
             'Laptop Session 2': 'sessions/laptop/rle_20251030_20.csv',
         }
         
-        selected_source = st.selectbox("Data Source", list(data_sources.keys()))
-        file_path = data_sources[selected_source]
+        # Filter to only existing files
+        existing_sources = {}
+        for name, path in data_sources.items():
+            if Path(path).exists():
+                existing_sources[name] = path
+        
+        file_path = None
+        if uploaded_file:
+            # Use uploaded file
+            file_path = None  # Will use uploaded_file in load_csv
+            selected_source = "Uploaded File"
+        elif existing_sources:
+            selected_source = st.selectbox("Data Source", list(existing_sources.keys()))
+            file_path = existing_sources[selected_source]
+        else:
+            st.info("Upload a CSV file or ensure session files are in the repo")
+            selected_source = None
         
         # Device selection
         st.markdown("---")
@@ -142,8 +166,16 @@ def main():
         temp_warning = st.slider("Temp Warning (°C)", 40.0, 100.0, 70.0, 5.0)
     
     # Load data
+    if not uploaded_file and not file_path:
+        st.warning("Please upload a CSV file or select a data source")
+        return
+    
     try:
-        df = load_csv(file_path)
+        df = load_csv(file_path=file_path, uploaded_file=uploaded_file)
+        if df.empty:
+            st.error("No data loaded. Please check your file.")
+            return
+        
         df_filtered = filter_device(df, device)
         
         if len(df_filtered) == 0:
