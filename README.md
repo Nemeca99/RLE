@@ -69,11 +69,16 @@ It will automatically:
 ### 🔧 Manual Start
 
 ```bash
-# Option A: Full suite (monitor + live graphs)
+# Option A: Live SCADA Dashboard (Recommended)
+cd lab/monitoring
+streamlit run scada_dashboard_live.py
+# Click "START Monitor" in sidebar, HWiNFO path pre-filled
+
+# Option B: Full suite (monitor + live graphs)
 cd lab
 start_monitoring_suite.bat
 
-# Option B: Monitoring only
+# Option C: Monitoring only
 cd lab
 python start_monitor.py --mode gpu --sample-hz 1
 ```

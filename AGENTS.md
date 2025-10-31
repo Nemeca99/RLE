@@ -623,3 +623,27 @@ Created `lab/releases/RLE_Standalone_v1.0/` with 113 files:
 
 **Result**: Complete, standalone, portable package ready for deployment with all empirical data, validated theory, and reproduction tools. Miner's Unified Laws proven across 3 platforms with clear boundary conditions.
 
+### Live SCADA Dashboard (Session: 2025-10-30)
+
+#### Production-Ready Real-Time Monitoring
+- **scada_dashboard_live.py**: Integrated live-updating SCADA dashboard
+- **Features**: Start/stop monitor controls, auto-refresh every 5s, live CSV tailing
+- **Visualization**: Gauge, multi-panel time series, statistics, distribution histograms
+- **Controls**: CPU/GPU/both modes, sample rate adjustment, device filtering, alert thresholds
+- **Status**: Real-time file age tracking, sample count, collapse detection
+- **Theme**: Dark SCADA aesthetic (charcoal + neon accents)
+- **Export**: One-click CSV export of filtered data
+
+#### Separation of Concerns
+- **Historical Dashboard** (`scada_dashboard.py`): Visualize existing CSVs
+- **Live Dashboard** (`scada_dashboard_live.py`): Control monitor + watch live updates
+- Both dashboards share same visualization codebase for consistency
+
+#### HWiNFO Integration Path Fix
+- **Default HWiNFO Path**: Pre-filled with `sessions/hwinfo/` directory
+- **CSV Logging**: HWiNFO writes to timestamped CSV files
+- **Monitor Tail**: Background monitor reads HWiNFO CSV for CPU/GPU temps
+- **Auto-refresh Toggle**: Disabled by default to prevent pulsing (user-controlled)
+
+**Result**: Production-grade SCADA panel for RLE monitoring with integrated monitor lifecycle management. Engineer-friendly interface for real-time thermal efficiency tracking across devices. Temperature data now properly integrated via HWiNFO CSV.
+

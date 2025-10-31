@@ -52,6 +52,26 @@ This repository contains a scientific instrument for measuring thermal-optimizat
 
 ### Quick Start
 
+#### Live SCADA Dashboard (Recommended)
+```bash
+# Launch live dashboard with integrated monitor control
+cd lab/monitoring
+streamlit run scada_dashboard_live.py
+```
+**Features:**
+- Click "START Monitor" in sidebar to begin data collection
+- Optional auto-refresh (disabled by default)
+- HWiNFO CSV path pre-filled (enable HWiNFO logging in Sensors → Logging)
+- Switch between CPU/GPU/both modes on the fly
+- Real-time temperature, power, utilization tracking
+- Export data with one click
+
+#### Historical Data Analysis
+```bash
+# View existing session CSVs
+streamlit run monitoring/scada_dashboard.py
+```
+
 #### Single Session Analysis
 ```bash
 python run_joint_session.py --model distilgpt2 --duration 120 --output results/
