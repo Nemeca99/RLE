@@ -441,11 +441,13 @@ rle_smoothed: count=697, mean=0.052, std=0.045, min=0.008, max=0.134
 
 | RLE Range | Meaning | Typical Load |
 |-----------|---------|--------------|
-| **0.8-1.0** | Excellent | Near-ideal conditions |
-| **0.5-0.8** | Good | Normal operation |
-| **0.2-0.5** | Fair | Moderate thermal stress |
-| **0.1-0.2** | Poor | Significant throttling |
-| **<0.1** | Critical | Severe degradation |
+| **>0.15** | Excellent | Near-ideal conditions, sustained load |
+| **0.10-0.15** | Good | Normal operation under load |
+| **0.05-0.10** | Fair | Idle/baseline, light load |
+| **0.02-0.05** | Poor | Heavy throttling or idle thermal inefficiency |
+| **<0.02** | Critical | Severe degradation or thermal shutdown approaching |
+
+**Important**: RLE is **relative to load**. Idle systems typically show 0.03-0.05 RLE. **Only compare RLE values under similar workload conditions**.
 
 ---
 
