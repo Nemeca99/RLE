@@ -232,9 +232,9 @@ def main():
         st.error(f"No data found for device: {device}")
         return
     
-    # Get latest values
+    # Get latest values (prefer normalized RLE if available)
     latest = df_filtered.iloc[-1]
-    rle_val = latest.get('rle_smoothed', latest.get('rle_raw', 0))
+    rle_val = latest.get('rle_norm', latest.get('rle_smoothed', latest.get('rle_raw', 0)))
     temp_val = latest.get('temp_c', 0)
     power_val = latest.get('power_w', 0)
     util_val = latest.get('util_pct', 0)
@@ -266,7 +266,7 @@ def main():
     
     with col1:
         st.markdown("### 📊 Live Gauge")
-        st.plotly_chart(create_gauge(rle_val, "RLE", 0, 1), width='stretch')
+        st.plotly_chart(create_gauge(rle_val, "RLE (normalized)", 0, 1), width='stretch')
         
         st.markdown("### 🔢 System Status")
         st.metric("Temperature", f"{temp_val:.1f}°C" if not pd.isna(temp_val) else "N/A", delta=None)
@@ -300,11 +300,15 @@ def main():
             row_heights=[0.4, 0.3, 0.3]
         )
         
-        # RLE trace
+        # RLE trace (prefer normalized)
+        rle_series = (
+            df_window['rle_norm'] if 'rle_norm' in df_window.columns else
+            df_window.get('rle_smoothed', df_window.get('rle_raw', 0))
+        )
         fig.add_trace(
             go.Scatter(
                 x=df_window['timestamp_dt'],
-                y=df_window.get('rle_smoothed', df_window.get('rle_raw', 0)),
+                y=rle_series,
                 mode='lines',
                 name='RLE',
                 line=dict(color='#00d4ff', width=2),
@@ -380,8 +384,8 @@ def main():
     with col3:
         st.markdown("### 📉 Statistics")
         
-        # Rolling stats
-        numeric_cols = ['rle_smoothed', 'temp_c', 'power_w', 'util_pct']
+        # Rolling stats (prefer normalized RLE)
+        numeric_cols = (['rle_norm'] if 'rle_norm' in df_filtered.columns else ['rle_smoothed']) + ['temp_c', 'power_w', 'util_pct']
         available_cols = [col for col in numeric_cols if col in df_filtered.columns]
         if available_cols:
             stats_df = df_filtered[available_cols].describe()
@@ -391,7 +395,7 @@ def main():
         
         # RLE distribution
         if len(df_filtered) > 0:
-            rle_col = 'rle_smoothed' if 'rle_smoothed' in df_filtered.columns else 'rle_raw'
+            rle_col = 'rle_norm' if 'rle_norm' in df_filtered.columns else ('rle_smoothed' if 'rle_smoothed' in df_filtered.columns else 'rle_raw')
             if rle_col in df_filtered.columns:
                 fig_dist = px.histogram(
                     df_filtered,
@@ -432,11 +436,14 @@ def main():
     st.markdown("---")
     st.markdown("### 📋 Event Log")
     
-    # Find alerts
-    if 'alerts' in df_filtered.columns:
-        alert_rows = df_filtered[df_filtered['alerts'].notna() & (df_filtered['alerts'] != '')]
-        if len(alert_rows) > 0:
-            alert_display = alert_rows[['timestamp', 'alerts', 'rle_smoothed', 'temp_c', 'power_w']].tail(20)
+        # Find alerts
+        if 'alerts' in df_filtered.columns:
+            alert_rows = df_filtered[df_filtered['alerts'].notna() & (df_filtered['alerts'] != '')]
+            if len(alert_rows) > 0:
+                rle_col = 'rle_norm' if 'rle_norm' in df_filtered.columns else ('rle_smoothed' if 'rle_smoothed' in df_filtered.columns else 'rle_raw')
+                cols = ['timestamp', 'alerts', rle_col, 'temp_c', 'power_w']
+                cols = [c for c in cols if c in alert_rows.columns]
+                alert_display = alert_rows[cols].tail(20)
             st.dataframe(alert_display, width='stretch')
         else:
             st.info("No alerts in current session")
